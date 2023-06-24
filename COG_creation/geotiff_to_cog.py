@@ -1,5 +1,6 @@
 import os 
 from osgeo import gdal
+from rio_cogeo.cogeo import cog_validate
 def print_gdal_info(file_path, print_keys=True):
     """"
     Print gdal.Info giventhe file_path 
@@ -59,18 +60,19 @@ def geotiff_to_cog(input_path, output_path, datetime_value):
         metadataOptions=[f'TIFFTAG_DATETIME = {datetime_value}']
         )    
     # Translate the TIFF to COG
-    ds = gdal.Translate(output_path, input_path, options=translate_options)    
-    """
-    # Add TIFFTAG_DATATIME 
-    try: 
-        if ds is not None: 
-            ds.SetMetadataItem("TIFFTAG_DATETIME", datetime_value)
-    except Exception as e: 
-        print(f"gdal.Translate returns a None object created an error when setting TIFFTAG_DATETIME for {input_path}: {str(e)}")
-    """
+    ds = gdal.Translate(output_path, input_path, options=translate_options)   
+    # Validate COG   
+    is_valid= cog_validate(src_path=output_path)
+    if is_valid[0]:
+        msg = f'{output_path} is a valid cloud optimized GeoTIFF'
+    else: 
+        msg = f'{output_path} is not a valid cloud optimized GeoTIFF \n {is_valid}'
+    print(msg)
     # Close the data
     ds = None 
+    return msg 
     
+
 # Usage
 script_dir = os.path.dirname(os.path.abspath(__file__))
 input_path =os.path.join(script_dir,  'Test', 'tiff', 'RiverIce_CAN_ON_Moose_20160503_232950.tif')
@@ -78,7 +80,7 @@ output_path = input_path.replace('.tif', '_cog.tif')
 
 reproject_raster(input_path, dstSRS='EPSG:3978', xRes=5, yRes=5)
 proj_path=input_path.replace('.tif', '_reprj.tif')
-print_gdal_info(proj_path, print_keys=True)
+#print_gdal_info(proj_path, print_keys=True)
 
 geotiff_to_cog(input_path, output_path, datetime_value='2016:05:03 23:29:50')
-print_gdal_info(output_path, print_keys=True)
+#print_gdal_info(output_path, print_keys=True)
