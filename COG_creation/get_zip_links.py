@@ -26,7 +26,7 @@ def get_zip_links(root_url, year, keyword):
         for href in href_list:
             if keyword in href:
                 subdir1 = root_url + href
-                print(f'Folder contains keyword {keyword},  continue to search in the first level subdirectory {subdir1}') 
+                #print(f'Folder contains keyword {keyword},  continue to search in the first level subdirectory {subdir1}') 
                 response = requests.get(subdir1)
                 soup = BeautifulSoup(response.content, 'html.parser')
                 # Extracting second subdirectory: /public/EGS/2016/RiverIce
@@ -34,7 +34,7 @@ def get_zip_links(root_url, year, keyword):
                     subdir1_href = link.get('href')
                     subdir2 = root_url + subdir1_href
                     if keyword in subdir1_href and not subdir1_href.endswith(".zip"): 
-                        print(f'Folder contains keyword {keyword} but not the zip file,  continue to search in second level subdirectory {subdir2}') 
+                        #print(f'Folder contains keyword {keyword} but not the zip file,  continue to search in second level subdirectory {subdir2}') 
                         response = requests.get(subdir2)
                         soup = BeautifulSoup(response.content, 'html.parser')
                         # Extracting thrid subdirectory: /public/EGS/2016/RiverIce/CAN
@@ -42,7 +42,7 @@ def get_zip_links(root_url, year, keyword):
                             subdir2_href = link.get('href')
                             subdir3 = root_url + subdir2_href
                             if keyword in subdir2_href and not subdir2_href.endswith(".zip"): 
-                                print(f'Folder contains keyword {keyword} but not the zip file,  continue to search in third level subdirectory {subdir3}') 
+                                #print(f'Folder contains keyword {keyword} but not the zip file,  continue to search in third level subdirectory {subdir3}') 
                                 response = requests.get(subdir3)
                                 soup = BeautifulSoup(response.content, 'html.parser')
                                 # Extracting forth(normally the last for EGS strcuture) subdirectory: /public/EGS/2016/RiverIce/CAN/Prov
@@ -71,7 +71,7 @@ def get_zip_links(root_url, year, keyword):
 
 #Usage 
 root_url = 'https://data.eodms-sgdot.nrcan-rncan.gc.ca'
-year = 2017  
+year = 2018  
 keyword = 'RiverIce' 
 zip_links = get_zip_links(root_url, year=2020, keyword='Flood')
 print(zip_links)
