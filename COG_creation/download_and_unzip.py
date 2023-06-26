@@ -25,7 +25,7 @@ def download_and_unzip(zip_url, zip_dir):
         zip_ref.extractall(unzip_dir)
     return unzip_dir
 
-def geotiff_path(unzip_dir, format): 
+def geotiff_path(unzip_dir, format, keyword): 
 
     """
     Given the path of unzippped files, return the Geotiff filename and file_path 
@@ -37,12 +37,12 @@ def geotiff_path(unzip_dir, format):
     count = 0 
     for item in os.listdir(unzip_dir): 
         #print('filename is {}' .format(item))
-        if item.endswith(format):
+        if keyword in item and item.endswith(format):
             count += 1 
             geotif_path = os.path.join(unzip_dir, item)
             geotiff_paths.append(geotif_path)
             geotiff_filenames.append(item)
-    print('{} {} are found in this folder.'.format(count, format))
+    #print('{} {} are found in this folder.'.format(count, format))
     return (geotiff_filenames, geotiff_paths)
 
 # Usage 
@@ -51,7 +51,7 @@ zip_dir = 'zip_test'
 unzip_dir = download_and_unzip(zip_url, zip_dir)
 print('unzip_dir is: {}'.format(unzip_dir))
 
-geotiff_filenames, geotif_paths =  geotiff_path(unzip_dir=unzip_dir, format='.tif')
+geotiff_filenames, geotif_paths =  geotiff_path(unzip_dir=unzip_dir, format='.tif', keyword='RiverIce')
 print(geotiff_filenames)
 print(geotif_paths)
 

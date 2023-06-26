@@ -60,6 +60,7 @@ def geotiff_to_cog(input_path, output_path, datetime_value):
         metadataOptions=[f'TIFFTAG_DATETIME = {datetime_value}']
         )    
     # Translate the TIFF to COG
+    # https://github.com/cogeotiff/rio-cogeo/blob/main/rio_cogeo/cogeo.py
     ds = gdal.Translate(output_path, input_path, options=translate_options)   
     # Validate COG   
     is_valid= cog_validate(src_path=output_path)

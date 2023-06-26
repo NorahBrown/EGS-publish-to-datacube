@@ -7,6 +7,7 @@ import boto3
 import logging
 from botocore.exceptions import ClientError
 from datetime import datetime
+from rio_cogeo.cogeo import cog_validate
 
 #TODO Change the Function to recursively retrieve the ZIP file links
 def get_zip_links(root_url, year, keyword): 
@@ -34,7 +35,7 @@ def get_zip_links(root_url, year, keyword):
         for href in href_list:
             if keyword in href:
                 subdir1 = root_url + href
-                print(f'Folder contains keyword {keyword},  continue to search in the first level subdirectory {subdir1}') 
+                #print(f'Folder contains keyword {keyword},  continue to search in the first level subdirectory {subdir1}') 
                 response = requests.get(subdir1)
                 soup = BeautifulSoup(response.content, 'html.parser')
                 # Extracting second subdirectory: /public/EGS/2016/RiverIce
@@ -42,7 +43,7 @@ def get_zip_links(root_url, year, keyword):
                     subdir1_href = link.get('href')
                     subdir2 = root_url + subdir1_href
                     if keyword in subdir1_href and not subdir1_href.endswith(".zip"): 
-                        print(f'Folder contains keyword {keyword} but not the zip file,  continue to search in second level subdirectory {subdir2}') 
+                        #print(f'Folder contains keyword {keyword} but not the zip file,  continue to search in second level subdirectory {subdir2}') 
                         response = requests.get(subdir2)
                         soup = BeautifulSoup(response.content, 'html.parser')
                         # Extracting thrid subdirectory: /public/EGS/2016/RiverIce/CAN
@@ -50,7 +51,7 @@ def get_zip_links(root_url, year, keyword):
                             subdir2_href = link.get('href')
                             subdir3 = root_url + subdir2_href
                             if keyword in subdir2_href and not subdir2_href.endswith(".zip"): 
-                                print(f'Folder contains keyword {keyword} but not the zip file,  continue to search in third level subdirectory {subdir3}') 
+                               # print(f'Folder contains keyword {keyword} but not the zip file,  continue to search in third level subdirectory {subdir3}') 
                                 response = requests.get(subdir3)
                                 soup = BeautifulSoup(response.content, 'html.parser')
                                 # Extracting forth(normally the last for EGS strcuture) subdirectory: /public/EGS/2016/RiverIce/CAN/Prov
@@ -101,7 +102,7 @@ def download_and_unzip(zip_url, zip_dir):
         zip_ref.extractall(unzip_dir)
     return unzip_dir
 
-def geotiff_path(unzip_dir, format): 
+def geotiff_path(unzip_dir, format, keyword): 
 
     """
     Given the path of unzippped files, return the Geotiff filename and file_path 
@@ -113,12 +114,12 @@ def geotiff_path(unzip_dir, format):
     count = 0 
     for item in os.listdir(unzip_dir): 
         #print('filename is {}' .format(item))
-        if item.endswith(format):
+        if keyword in item and item.endswith(format):
             count += 1 
             geotif_path = os.path.join(unzip_dir, item)
             geotiff_paths.append(geotif_path)
             geotiff_filenames.append(item)
-    print('{} {} are found in this folder.'.format(count, format))
+    #print('{} {} are found in this folder.'.format(count, format))
     return (geotiff_filenames, geotiff_paths)
 
 
@@ -151,14 +152,18 @@ def reproject_raster(input_path, dstSRS, xRes, yRes):
         format='GTiff', 
         dstSRS = dstSRS, 
         xRes=xRes, 
-        yRes=yRes
+        yRes=yRes, 
+        targetAlignedPixels=True, 
+        resampleAlg = 'near' , 
+        srcNodata=0,
+        dstNodata=0  
     )
     ds = gdal.Warp(destNameOrDestDS=reProj_path, srcDSOrSrcDSTab=input_path, options=warp_options)
     
     # Close the data 
     ds = None 
     
- 
+
 def geotiff_to_cog(input_path, output_path, datetime_value):
     """
     Translate geotiff to COG using using gdal.translate, and add TIFFTAG_DATETIME
@@ -174,20 +179,22 @@ def geotiff_to_cog(input_path, output_path, datetime_value):
                          'BLOCKSIZE = 512', 
                          'BLOCKSIZE = 512'
                          ],
+        # Add datetime tag while creating the COG 
+        metadataOptions=[f'TIFFTAG_DATETIME = {datetime_value}']
         )    
     # Translate the TIFF to COG
-    ds = gdal.Translate(output_path, input_path, options=translate_options)    
-    
-    # Add TIFFTAG_DATATIME 
-    try: 
-        if ds is not None: 
-            ds.SetMetadataItem("TIFFTAG_DATETIME", datetime_value)
-    except Exception as e: 
-        print(f"gdal.Translate returns a None object created an error when setting TIFFTAG_DATETIME for {input_path}: {str(e)}")
-    
+    ds = gdal.Translate(output_path, input_path, options=translate_options)   
+    # Validate COG   
+    is_valid= cog_validate(src_path=output_path)
+    if is_valid[0]:
+        msg = f'{output_path} is a valid cloud optimized GeoTIFF'
+    else: 
+        msg = f'{output_path} is not a valid cloud optimized GeoTIFF \n {is_valid}'
+    print(msg)
     # Close the data
     ds = None 
-
+    return msg 
+  
 
 def list_files_in_s3(bucket_name, folder_path):
     """ List a filenames in a S3 bucket or a S3 folder  
@@ -279,79 +286,82 @@ def upload_file_to_s3(bucket_name, folder_path, local_file_path, new_file_name):
         return False 
     return True 
 
-#Main function for river ice cog generate pipeline 
-def riverice_cog_pipeline(root_url, year, keyword, bucket_name, folder_path, zip_dir, proj_epsg, xRes, yRes):
-    # Step 1: get a list of the zip links for specific year  
-    zip_links = get_zip_links(root_url, year, keyword)
-    # Step 2: Load log.txt content from the S3 
+# call Main function in command line 
+def main(root_url, years, keyword, bucket_name, folder_path, zip_dir, proj_epsg, xRes, yRes):
+    """
+    Call every function to creat cog and upload to S3 bucket 
+    """
+    # Step 1: load log.txt content from S3 and create an empty list for lastRun content 
     filenames = list_files_in_s3(bucket_name, folder_path)
     if 'log.txt' in filenames:
         print('Log file exists, loading it from S3 bucket') 
         log_content = open_file_from_s3(bucket_name, folder_path, file_name='log.txt')
     else: 
         # Open the file in read and write mode ('r+')
-        print('Log file does not exist, creating a empty string as the content of log.txt') 
+        print('Log file does not exist, creating an empty string as the content of log.txt') 
         log_content = ' '
-    # Step 3: Loop through link in the zip_links, and check 
-    # 1) if the link has been translated 
-    # 2) If not translated, pass the link to lastrun list 
-    # 3) Get the full url link, and then download and unzip the file 
-    # 4) Get the geotiff path in the unzipped folder 
-    # 5) Convert the geotiff to vog 
-    # 6) Upload the zip and cog to S3 bucekt 
-    # 7) Update log_content 
-    # 8) Exit loop, upload log_content to S3 bucket as log.txt 
-    lastRun = []
+    lastRun = ' '
     count = 0 
-    #print(zip_links)
-    for link in zip_links: 
-        print(link)
-        print(type(link))
-        if link not in log_content: 
-            print(f'{link} has not been translated, continue to next step')
-            unzip_dir = download_and_unzip(link, zip_dir)
-            print(f'unzip_dir is: {unzip_dir}')
+    for year in years: 
+        print(f'Start processing the COG for year {year}')
+        # Step 2: get a list of the zip links for specific year  
+        zip_links = get_zip_links(root_url, year, keyword)
+        # Step 3: for each zip url link, check: 
+        # 1) if the link has been translated 
+        # 2) If not translated, pass the link to lastrun list 
+        # 3) Get the full url link, and then download and unzip the file 
+        # 4) Get the geotiff path in the unzipped folder 
+        # 5) Convert the geotiff to vog 
+        # 6) Upload the zip and cog to S3 bucekt 
+        # 7) Update log_content 
+        # 8) Exit loop, upload log_content to S3 bucket as log.txt 
+        for link in zip_links: 
+            print(f'Start processing {link}')
+            if link not in log_content: 
+                print(f'This zip has not been translated and proceed to translation')
+                unzip_dir = download_and_unzip(link, zip_dir)
+                #print(f'unzip_dir is: {unzip_dir}')        
+                geotiff_filename, geotif_path =  geotiff_path(unzip_dir=unzip_dir, format='.tif', keyword = keyword)
+                input_path = os.path.join(os.getcwd(), geotif_path[0])
+                #print(geotiff_filename)
+                #print(geotif_path)
         
-            geotiff_filename, geotif_path =  geotiff_path(unzip_dir=unzip_dir, format='.tif')
-            input_path = os.path.join(os.getcwd(), geotif_path[0])
-            #print(geotiff_filename)
-            #print(geotif_path)
+                reproject_raster(input_path=input_path, dstSRS=proj_epsg, xRes=xRes, yRes=yRes)
+                proj_path=input_path.replace('.tif', '_reprj.tif')
+                output_path = input_path.replace('.tif', '_cog.tif')
         
-            reproject_raster(input_path=input_path, dstSRS=proj_epsg, xRes=xRes, yRes=yRes)
-            proj_path=input_path.replace('.tif', '_reprj.tif')
-            output_path = input_path.replace('.tif', '_cog.tif')
-        
-            # Extract datetime from the file name 
-            # Extract the timestamp from the string
-            time_str = link.split('_')[-1].split('.')[0]
-            date_str = link.split('_')[-2].split('.')[0]
-            timestamp =date_str  +"_" + time_str
-            datetime_obj = datetime.strptime(timestamp, '%Y%m%d_%H%M%S')
-            formatted_datetime = datetime_obj.strftime('%Y:%m:%d %H:%M:%S')
-            print(formatted_datetime)
+                # Extract datetime from the file name 
+                time_str = link.split('_')[-1].split('.')[0]
+                date_str = link.split('_')[-2].split('.')[0]
+                timestamp =date_str  +"_" + time_str
+                datetime_obj = datetime.strptime(timestamp, '%Y%m%d_%H%M%S')
+                formatted_datetime = datetime_obj.strftime('%Y:%m:%d %H:%M:%S')
+                #print(formatted_datetime)
 
-            geotiff_to_cog(proj_path, output_path, datetime_value=formatted_datetime)
-            #print_gdal_info(output_path, print_keys=True)
-            #TODO upload cog to datacube S3 
-            zip_file_path = os.path.join(os.getcwd(), unzip_dir)
-            zip_file_path = zip_file_path + '.zip'
-            print(zip_file_path)
-            upload_file_to_s3(bucket_name, folder_path=folder_path+'zip/', local_file_path=zip_file_path, new_file_name=os.path.basename(zip_file_path))
-            upload_file_to_s3(bucket_name, folder_path=folder_path+'cog/', local_file_path=output_path, new_file_name=os.path.basename(geotif_path[0]))
-            count += 1
-            log_content = log_content + '\n' + link
-        else:
-            print(f'{link} has been translated') 
+                is_valid = geotiff_to_cog(proj_path, output_path, datetime_value=formatted_datetime)
+                #print_gdal_info(output_path, print_keys=True)
+                #TODO upload cog to datacube S3 
+                zip_file_path = os.path.join(os.getcwd(), unzip_dir)
+                zip_file_path = zip_file_path + '.zip'
+                  
+                upload_file_to_s3(bucket_name, folder_path=folder_path+'zip/', local_file_path=zip_file_path, new_file_name=os.path.basename(zip_file_path))
+                upload_file_to_s3(bucket_name, folder_path=folder_path+'cog/', local_file_path=output_path, new_file_name=os.path.basename(geotif_path[0]))
+                    
+                count += 1
+                log_content = log_content + '\n' + link
+                lastRun = lastRun + '\n' + is_valid
+            else:
+                print(f'{link} has been translated') 
     # Upload the log.txt to s3
-    file_key = folder_path + 'log.txt'
-    upload_fileContent_to_s3(bucket_name, file_key, file_content=log_content)
-    return log_content
+    upload_fileContent_to_s3(bucket_name, file_key=folder_path + 'log.txt', file_content=log_content)
+    upload_fileContent_to_s3(bucket_name, file_key=folder_path + 'lastRun.txt', file_content=lastRun)
+    return lastRun
 
 
 
 # Translate and upload EGS RiiverIce cog to S3 bucket 
 root_url = 'https://data.eodms-sgdot.nrcan-rncan.gc.ca'
-yrs = [2005, 2008, 2011] + [year for year in range(2013, 2024)] 
+years = [2005, 2008, 2011] + [year for year in range(2013, 2024)] 
 keyword = 'RiverIce' 
 bucket_name = 'nrcan-egs-product-archive'
 folder_path='Datacube/RiverIce/'
@@ -360,7 +370,6 @@ zip_dir = 'zip_test'
 proj_epsg = 'EPSG:3978'
 xRes=5
 yRes=5
-for year in yrs:
-   log_content = riverice_cog_pipeline(root_url, year, keyword, bucket_name, folder_path, zip_dir, proj_epsg, xRes, yRes)
-   #print (f'For year {year}, the logs re \n {log_content}')
+lastRun = main(root_url, years, keyword, bucket_name, folder_path, zip_dir, proj_epsg, xRes, yRes)
+print (f'The lastRun logging is,  \n {lastRun}')
 
