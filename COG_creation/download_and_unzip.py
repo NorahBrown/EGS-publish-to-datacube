@@ -9,7 +9,11 @@ def download_and_unzip(zip_url, zip_dir):
     :param zip_dir: a folder name to save the zip downloads, a path will be created locally use the zip_dir
     """
     # Make temporary directory to save the zip downloads  
-    os.makedirs(zip_dir, exist_ok=True)
+    if not os.path.exists(zip_dir): 
+        os.makedirs(zip_dir, exist_ok=True)
+        print("Directory created successfully!")
+    else:     
+        print("Directory already exists.")
     # Download the zip file 
     filename = os.path.join(zip_url.split('/')[-1])
     zip_file_path = os.path.join(zip_dir, filename)
