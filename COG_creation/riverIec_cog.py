@@ -86,7 +86,11 @@ def download_and_unzip(zip_url, zip_dir):
     :param zip_dir: a folder name to save the zip downloads, a path will be created locally use the zip_dir
     """
     # Make temporary directory to save the zip downloads  
-    os.makedirs(zip_dir, exist_ok=True)
+    if not os.path.exists(zip_dir):
+        os.makedirs(zip_dir, exist_ok=True)
+        print("Directory created successfully!")
+    else:     
+        print("Directory already exists.")
     # Download the zip file 
     filename = os.path.join(zip_url.split('/')[-1])
     zip_file_path = os.path.join(zip_dir, filename)
@@ -352,16 +356,17 @@ def main(root_url, years, keyword, bucket_name, folder_path, zip_dir, proj_epsg,
                 lastRun = lastRun + '\n' + is_valid
             else:
                 print(f'{link} has been translated') 
-    # Upload the log.txt to s3
-    upload_fileContent_to_s3(bucket_name, file_key=folder_path + 'log.txt', file_content=log_content)
+        #Upload log.txt to S3 after running for each year 
+        upload_fileContent_to_s3(bucket_name, file_key=folder_path + 'log.txt', file_content=log_content)
+    # Upload the lastRun.txt to s3
     upload_fileContent_to_s3(bucket_name, file_key=folder_path + 'lastRun.txt', file_content=lastRun)
     return lastRun
 
 
 
 # Translate and upload EGS RiiverIce cog to S3 bucket 
-root_url = 'https://data.eodms-sgdot.nrcan-rncan.gc.ca'
-years = [2005, 2008, 2011] + [year for year in range(2013, 2024)] 
+root_url = 'https://data.eodms-sgdot.nrcan-rncan.gc.ca' 
+years = [year for year in range(2005, 2024)]
 keyword = 'RiverIce' 
 bucket_name = 'nrcan-egs-product-archive'
 folder_path='Datacube/RiverIce/'

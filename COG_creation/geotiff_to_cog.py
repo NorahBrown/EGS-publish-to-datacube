@@ -76,12 +76,12 @@ def geotiff_to_cog(input_path, output_path, datetime_value):
 
 # Usage
 script_dir = os.path.dirname(os.path.abspath(__file__))
-input_path =os.path.join(script_dir,  'Test', 'tiff', 'RiverIce_CAN_ON_Moose_20160503_232950.tif')
+input_path =os.path.join(script_dir,  'Test', 'tiff', 'RiverIce_CAN_NT_UpperMackenzieCamsellBend_20200513_013745.tif')
 output_path = input_path.replace('.tif', '_cog.tif')
 
 reproject_raster(input_path, dstSRS='EPSG:3978', xRes=5, yRes=5)
 proj_path=input_path.replace('.tif', '_reprj.tif')
 #print_gdal_info(proj_path, print_keys=True)
 
-geotiff_to_cog(input_path, output_path, datetime_value='2016:05:03 23:29:50')
+geotiff_to_cog(input_path, output_path, datetime_value='2020:05:13 01:37:45')
 #print_gdal_info(output_path, print_keys=True)
