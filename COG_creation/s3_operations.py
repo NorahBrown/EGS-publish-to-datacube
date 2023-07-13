@@ -1,6 +1,7 @@
 import boto3
 import logging
 from botocore.exceptions import ClientError
+import os 
 
 def list_files_in_s3(bucket_name, folder_path):
     """ List a filenames in a S3 bucket or a S3 folder  
@@ -86,11 +87,62 @@ def upload_file_to_s3(bucket_name, folder_path, local_file_path, new_file_name):
     # Concatenate the folder path and file name 
     s3_key = folder_path + new_file_name
     try: 
-        s3_client.upload_file(local_file_path, bucket_name, s3_key)
+        # Add public read ACL 
+        s3_client.upload_file(local_file_path, bucket_name, s3_key, ExtraArgs={'ACL': 'public-read'})
     except ClientError as e:
         logging.error(e)
         return False 
     return True 
+
+def download_file_from_s3(bucekt_name, folder_path, local_dir, format):
+    """
+    :param format: string, file extension '.tif'
+    """
+    # Create a Boto3 S3 client
+    s3_client = boto3.client('s3')
+    # List objects in the S3 bucket
+    response = s3_client.list_objects_v2(Bucket=bucekt_name, Prefix = folder_path)
+    # Iterate over the objects in the bucket
+    for obj in response['Contents']:
+        # Get the file key (path) of each object
+        file_key = obj['Key']
+        # Check if the file is a .tif file
+        if file_key.endswith(format):
+            # Create the local directory if it doesn't exist
+            os.makedirs(local_dir, exist_ok=True)
+            # Specify the local file path for downloading
+            local_file_path = os.path.join(local_dir, file_key.split('/')[-1])
+            print(local_file_path)
+            # Download the file from S3
+            s3_client.download_file(bucket_name, file_key, local_file_path)
+        
+            print(f"Downloaded: {file_key}")
+
+    print(f"All {format} files downloaded.")
+
 # Usage 
-bucket_name = 'nrcan-egs-product-archive'
-folder_path='Datacube/RiverIce/'
+#bucket_name = 'nrcan-egs-product-archive'
+#folder_path='Datacube/RiverIce/json/'
+bucket_name = 'datacube-stage-data-public'
+folder_path='store/water/river-ice-canada-archive/'
+
+#download_file_from_s3(bucket_name, folder_path, local_dir='C:/Users/xcai/Documents/EGS_projects/RiverIce/cog/', format='.json')
+#upload_file_to_s3(bucket_name, folder_path, local_file_path, new_file_name)
+import os 
+def list_files_with_extension(directory, extension):
+    filenames = []
+    for file in os.listdir(directory):
+        if file.endswith(extension):
+            filenames.append(file)
+    return filenames
+
+# Example usage
+directory = 'C:/Users/xcai/Documents/EGS_projects/RiverIce/assets'
+extension = '.png'
+
+filenames = list_files_with_extension(directory, extension)
+print(len(filenames))
+for filename in filenames: 
+    print(filename)
+    upload_file_to_s3(bucket_name, folder_path, local_file_path=directory+'/'+filename, new_file_name=filename)
+ 
