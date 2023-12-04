@@ -12,7 +12,9 @@ conda activate py36
 conda install rio-cogeo
 conda install beautifulsoup4
 conda list 
+```
 
 ### Run the main.py file in terminal 
 ```bash
 python main.py "https://data.eodms-sgdot.nrcan-rncan.gc.ca" "2005 2006 2007" "RiverIce" "nrcan-egs-product-archive" "Datacube/RiverIce/" "zip_test" "EPSG:3978" 5 5
+```
