@@ -69,9 +69,11 @@ def get_zip_links(root_url, year, keyword):
     print(f'There are {count} {keyword} instance recorded in {url}')
     return zip_links
 
-#Usage 
+"""
+#Test
 root_url = 'https://data.eodms-sgdot.nrcan-rncan.gc.ca'
 year = 2018  
 keyword = 'RiverIce' 
 zip_links = get_zip_links(root_url, year=2020, keyword='Flood')
 print(zip_links)
+"""

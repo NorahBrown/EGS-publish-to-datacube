@@ -73,8 +73,8 @@ def geotiff_to_cog(input_path, output_path, datetime_value):
     ds = None 
     return msg 
     
-
-# Usage
+"""
+# Test
 script_dir = os.path.dirname(os.path.abspath(__file__))
 input_path =os.path.join(script_dir,  'Test', 'tiff', 'RiverIce_CAN_NT_UpperMackenzieCamsellBend_20200513_013745.tif')
 output_path = input_path.replace('.tif', '_cog.tif')
@@ -85,3 +85,4 @@ proj_path=input_path.replace('.tif', '_reprj.tif')
 
 geotiff_to_cog(input_path, output_path, datetime_value='2020:05:13 01:37:45')
 #print_gdal_info(output_path, print_keys=True)
+"""
