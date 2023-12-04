@@ -49,7 +49,8 @@ def geotiff_path(unzip_dir, format, keyword):
     #print('{} {} are found in this folder.'.format(count, format))
     return (geotiff_filenames, geotiff_paths)
 
-# Usage 
+"""
+# Test 
 zip_url = 'https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS/2016/RiverIce/CAN/ON/RiverIce_CAN_ON_Attawapiskat_20160420_114518.zip'
 zip_dir = 'zip_test'
 unzip_dir = download_and_unzip(zip_url, zip_dir)
@@ -58,4 +59,4 @@ print('unzip_dir is: {}'.format(unzip_dir))
 geotiff_filenames, geotif_paths =  geotiff_path(unzip_dir=unzip_dir, format='.tif', keyword='RiverIce')
 print(geotiff_filenames)
 print(geotif_paths)
-
+"""

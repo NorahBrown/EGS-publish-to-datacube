@@ -120,15 +120,6 @@ def download_file_from_s3(bucekt_name, folder_path, local_dir, format):
 
     print(f"All {format} files downloaded.")
 
-# Usage 
-#bucket_name = 'nrcan-egs-product-archive'
-#folder_path='Datacube/RiverIce/json/'
-bucket_name = 'datacube-stage-data-public'
-folder_path='store/water/river-ice-canada-archive/'
-
-#download_file_from_s3(bucket_name, folder_path, local_dir='C:/Users/xcai/Documents/EGS_projects/RiverIce/cog/', format='.json')
-#upload_file_to_s3(bucket_name, folder_path, local_file_path, new_file_name)
-import os 
 def list_files_with_extension(directory, extension):
     filenames = []
     for file in os.listdir(directory):
@@ -136,7 +127,18 @@ def list_files_with_extension(directory, extension):
             filenames.append(file)
     return filenames
 
-# Example usage
+"""
+# Test 
+#bucket_name = 'nrcan-egs-product-archive'
+#folder_path='Datacube/RiverIce/json/'
+bucket_name = 'datacube-stage-data-public'
+folder_path='store/water/river-ice-canada-archive/'
+
+download_file_from_s3(bucket_name, folder_path, local_dir='C:/Users/xcai/Documents/EGS_projects/RiverIce/cog/', format='.json')
+upload_file_to_s3(bucket_name, folder_path, local_file_path, new_file_name)
+
+
+# Test 2 
 directory = 'C:/Users/xcai/Documents/EGS_projects/RiverIce/assets'
 extension = '.png'
 
@@ -145,4 +147,4 @@ print(len(filenames))
 for filename in filenames: 
     print(filename)
     upload_file_to_s3(bucket_name, folder_path, local_file_path=directory+'/'+filename, new_file_name=filename)
- 
+"""
