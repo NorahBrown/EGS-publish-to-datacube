@@ -33,7 +33,7 @@ def main(infile:Union[str,Path],
     Convert input geotiff to cog
     Upload the cog and sidecar(s) to S3 bucket 
     """
-
+    infile = Path(infile)
     bucket = f'datacube-{level}-data-public'
     proj_epsg = CRS.from_epsg(epsg)
     output_path = infile.with_stem(f'{infile.stem}_cog.tif')
@@ -59,5 +59,5 @@ def main(infile:Union[str,Path],
 
     # Call ddb-api to create and publish STAC
     egs_publish_stac.main(text_filter=input.stem,level=level)
-    
+
     return
