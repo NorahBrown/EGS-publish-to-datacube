@@ -39,6 +39,8 @@ def reproject_raster(input_path, dstSRS, xRes, yRes):
     
     # Close the data 
     ds = None 
+
+    return reProj_path
     
 
 def geotiff_to_cog(input_path, output_path, datetime_value):
