@@ -1,6 +1,11 @@
 # EGS-publish-to-datacube
 Pipeline to generate COGs, create STAC metadata, and publish to CCMEO datacube
+## The new datacube pipeline does not use the zipped files, but will eventually be included in the new data production pipeline.
 
+COG_creation: holds the python 3.6 code
+if reusable in 3.10 it will be used, if not a 3.10 version will be created.
+
+# ORIGINAL README CONTENT used to COGIFY full archive up to 2022
 ## Run the COG creation scripts  
 ### Create the python environment  
 Note, VPN needs to be turned off for this step to aovid SSLCertVerificationError. 
