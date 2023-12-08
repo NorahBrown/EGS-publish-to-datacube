@@ -76,11 +76,11 @@ def _handle_args():
 
     args = parser.parse_args()
 
-    lastRun = main(infile=args.infile,
-                   res=args.resolution,
-                   epsg=args.epsg_crs,
-                   level=args.level,
-                   prefix=args.prefix)
+    main(infile=args.infile,
+         res=args.resolution,
+         epsg=args.epsg_crs,
+         level=args.level,
+         prefix=args.prefix)
     
 if __name__ == '__main__':
     _handle_args()
