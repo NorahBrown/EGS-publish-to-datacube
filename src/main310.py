@@ -6,6 +6,7 @@ Publishes it to the datacube repo
 Send create and publishe STAC command to datacube
 """
 # Python standard library
+import argparse
 from datetime import datetime
 from numbers import Number
 from pathlib import Path
@@ -31,7 +32,8 @@ def main(infile:Union[str,Path],
          ):
     """
     Convert input geotiff to cog
-    Upload the cog and sidecar(s) to S3 bucket 
+    Upload the cog and sidecar(s) to S3 bucket
+    Call ddb-api to create and publish STAC for new item
     """
     infile = Path(infile)
     bucket = f'datacube-{level}-data-public'
@@ -61,3 +63,24 @@ def main(infile:Union[str,Path],
     egs_publish_stac.main(text_filter=input.stem,level=level)
 
     return
+
+def _handle_args():
+
+    parser = argparse.ArgumentParser(description='Process tifs to datacube.')
+
+    parser.add_argument('infile', type=str, help='The full path to tif to be converted.')
+    parser.add_argument('resolution', type=int, default=5, help='The output spatial resolution in meters, default is 5')
+    parser.add_argument('-c''--epsg_crs', type=int, default=3978, help="The EPSG number")
+    parser.add_argument('-l''--level', type=str, default='stage', help='The datacube publication level')
+    parser.add_argument('-p''prefix', type=str, default='/store/water/river-ice-canada-archive',help='The bucket prefix for the collection')
+
+    args = parser.parse_args()
+
+    lastRun = main(infile=args.infile,
+                   res=args.resolution,
+                   epsg=args.epsg_crs,
+                   level=args.level,
+                   prefix=args.prefix)
+    
+if __name__ == '__main__':
+    _handle_args()
