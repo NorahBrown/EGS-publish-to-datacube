@@ -10,4 +10,4 @@ dependencies:
   - boto3
   - pip:
     - rio-cogeo
-    - ccmeo-datacube-authentication@git+https://git.geoproc.geogc.ca/datacube/utilities/datacube_authentication.git
+    - ccmeo-datacube-create-stac@git+https://git.geoproc.geogc.ca/datacube/metadata/create-stac.git

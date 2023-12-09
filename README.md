@@ -9,6 +9,14 @@ The conda env can be created directly from the yml file.
  ```shell
  conda env create -f egs_env.yml
  ```
+## Running the code
+### Setting environment variables
+ - set the AWS security credentials
+ - set the ddb authentication env variables
+ ```shell
+ (SET|export) DDB_AUTH_USER=<username>
+ (SET|export) DDB_AUTH_PASSWORD=<password>
+ ```
  ## Python 3.10 code management
   - all new python 3.10 code is under the src directory
 

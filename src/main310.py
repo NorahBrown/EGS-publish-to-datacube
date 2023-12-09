@@ -18,7 +18,7 @@ from typing import Union
 from rasterio.crs import CRS
 
 # Datacube custom packages
-from ccmeo_datacube_authentication.scripts import egs_publish_stac
+from ccmeo_datacube_create_stac.scripts import egs_publish_stac
 
 # Ensure pythonpath has repo root for local module imports
 root = Path(__file__).parents[1]
@@ -48,13 +48,13 @@ def main(infile:Union[str,Path],
     proj_epsg = CRS.from_epsg(epsg)
     output_path = infile.with_stem(f'{infile.stem}_cog.tif')
 
-    # Extract datetime from the file name 
-    time_str = infile.stem.split('_')[-1]
-    date_str = infile.stem.split('_')[-2]
-    timestamp =date_str  +"_" + time_str
-    datetime_obj = datetime.strptime(timestamp, '%Y%m%d_%H%M%S')
+    # Extract datetime from the file name <other>_<date>_<time>.tif
+    parts = infile.stem.split('_')
+    timestamp =f'{parts[-2]}T{parts[-1]}'
+
+    # Reformat to TIFFTAG_DATETIME format
+    datetime_obj = datetime.strptime(timestamp, '%Y%m%dT%H%M%S')
     formatted_datetime = datetime_obj.strftime('%Y:%m:%d %H:%M:%S')
-    #print(formatted_datetime)
 
     # Reproject the infile
     proj_path = reproject_raster(
@@ -63,7 +63,6 @@ def main(infile:Union[str,Path],
         xRes=res,
         yRes=res,
         resampleAlg=method)
-
 
     is_valid = geotiff_to_cog(proj_path, output_path, datetime_value=formatted_datetime)
         
