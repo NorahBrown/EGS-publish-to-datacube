@@ -94,14 +94,14 @@ def upload_file_to_s3(bucket_name, folder_path, local_file_path, new_file_name):
         return False 
     return True 
 
-def download_file_from_s3(bucekt_name, folder_path, local_dir, format):
+def download_file_from_s3(bucket_name, folder_path, local_dir, format):
     """
     :param format: string, file extension '.tif'
     """
     # Create a Boto3 S3 client
     s3_client = boto3.client('s3')
     # List objects in the S3 bucket
-    response = s3_client.list_objects_v2(Bucket=bucekt_name, Prefix = folder_path)
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix = folder_path)
     # Iterate over the objects in the bucket
     for obj in response['Contents']:
         # Get the file key (path) of each object

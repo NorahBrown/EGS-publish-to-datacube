@@ -47,6 +47,7 @@ def main(infile:Union[str,Path],
     bucket = f'datacube-{level}-data-public'
     proj_epsg = CRS.from_epsg(epsg)
     output_path = infile.with_stem(f'{infile.stem}_cog.tif')
+    success = False
 
     # Extract datetime from the file name <other>_<date>_<time>.tif
     parts = infile.stem.split('_')
@@ -64,17 +65,33 @@ def main(infile:Union[str,Path],
         yRes=res,
         resampleAlg=method)
 
-    is_valid = geotiff_to_cog(proj_path, output_path, datetime_value=formatted_datetime)
+    # Create COG and check if COG is valid
+    valid_cog = geotiff_to_cog(proj_path, output_path, datetime_value=formatted_datetime)
+
+    if not valid_cog:
+        return {'sucess':success,
+                'message':'COG is invalid',
+                'input':input,
+                'cog':output_path,
+                'published_cog':False,
+                'published_stac':False}
         
-    upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_path, new_file_name=output_path.name)
+    published_cog = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_path, new_file_name=output_path.name)
+    if published_cog:
 
-    # TODO upload side cars
-    # upload_fileContent_to_s3(bucket, file_key=prefix + 'is-active.txt', file_content=is_active_as_string)
+        # TODO upload side cars
+        # upload_fileContent_to_s3(bucket, file_key=prefix + 'is-active.txt', file_content=is_active_as_string)
 
-    # Call ddb-api to create and publish STAC
-    egs_publish_stac.main(text_filter=input.stem,level=level)
+        # Call ddb-api to create and publish STAC
+        published_stac = egs_publish_stac.main(text_filter=input.stem,level=level)
+        success = published_stac['success']
 
-    return
+    return {'sucess':success,
+                'message':'Published COG and STAC',
+                'input':input,
+                'cog':output_path,
+                'published_cog':published_cog,
+                'published_stac':published_stac}
 
 def _handle_args():
 
