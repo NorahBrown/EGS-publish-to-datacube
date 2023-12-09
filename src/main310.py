@@ -9,7 +9,9 @@ Send create and publishe STAC command to datacube
 import argparse
 from datetime import datetime
 from numbers import Number
+import os
 from pathlib import Path
+import sys
 from typing import Union
 
 # Custom packages
@@ -18,10 +20,15 @@ from rasterio.crs import CRS
 # Datacube custom packages
 from ccmeo_datacube_authentication.scripts import egs_publish_stac
 
+# Ensure pythonpath has repo root for local module imports
+root = Path(__file__).parents[1]
+if str(root.absolute()) not in sys.path:
+    sys.path.insert(0,str(root.absolute()))
+
 # Local modules
-from ..COG_creation.geotiff_to_cog import (reproject_raster,
+from COG_creation.geotiff_to_cog import (reproject_raster,
                                            geotiff_to_cog)
-from ..COG_creation.s3_operations import (upload_file_to_s3,
+from COG_creation.s3_operations import (upload_file_to_s3,
                                           upload_fileContent_to_s3)
 
 def main(infile:Union[str,Path],

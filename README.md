@@ -1,7 +1,9 @@
-# EGS-publish-to-datacube
-Pipeline to generate COGs, create STAC metadata, and publish to CCMEO datacube
+# EGS-publish-to-datacube | datacube/pipeline/egs
+Data publication pipeline that generates COGs, creates STAC metadata, and publishes to the CCMEO datacube
 ## The python 3.10 datacube pipeline 
- - The source data is not zipped files, but will eventually be included in the new data production pipeline.
+ - The source data is no longer zipped files.
+ - The new source data will be from the data production pipeline currently in development.
+ - The data production pipeline will be the input to this new data publication pipeline.
 ## Creating your conda environment
 The conda env can be created directly from the yml file.  
  ```shell
