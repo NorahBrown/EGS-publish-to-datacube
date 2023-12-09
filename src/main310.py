@@ -9,7 +9,6 @@ Send create and publishe STAC command to datacube
 import argparse
 from datetime import datetime
 from numbers import Number
-import os
 from pathlib import Path
 import sys
 from typing import Union
@@ -46,8 +45,10 @@ def main(infile:Union[str,Path],
     infile = Path(infile)
     bucket = f'datacube-{level}-data-public'
     proj_epsg = CRS.from_epsg(epsg)
-    output_path = infile.with_stem(f'{infile.stem}_cog.tif')
+    output_path = infile.with_stem(f'{infile.stem}_cog')
     success = False
+    published_cog = False
+    published_stac = False
 
     # Extract datetime from the file name <other>_<date>_<time>.tif
     parts = infile.stem.split('_')
@@ -60,23 +61,24 @@ def main(infile:Union[str,Path],
     # Reproject the infile
     proj_path = reproject_raster(
         input_path=infile,
-        dstSRS=proj_epsg,
+        dstSRS=str(proj_epsg),
         xRes=res,
         yRes=res,
         resampleAlg=method)
 
     # Create COG and check if COG is valid
-    valid_cog = geotiff_to_cog(proj_path, output_path, datetime_value=formatted_datetime)
+    valid_cog = geotiff_to_cog(str(proj_path), str(output_path), datetime_value=formatted_datetime)
 
     if not valid_cog:
         return {'sucess':success,
                 'message':'COG is invalid',
                 'input':input,
                 'cog':output_path,
+                "valid_cog":valid_cog,
                 'published_cog':False,
                 'published_stac':False}
         
-    published_cog = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_path, new_file_name=output_path.name)
+    published_cog,pc_err = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_path, new_file_name=output_path.name)
     if published_cog:
 
         # TODO upload side cars
@@ -85,13 +87,19 @@ def main(infile:Union[str,Path],
         # Call ddb-api to create and publish STAC
         published_stac = egs_publish_stac.main(text_filter=input.stem,level=level)
         success = published_stac['success']
+    result = {'sucess':success,
+              'message':'Published COG and STAC',
+              'infile':str(infile.absolute()),
+              'cog':str(output_path.absolute()),
+              "valid_cog":valid_cog,
+              'published_cog_success':published_cog,
+              'published_cog_error':str(pc_err),
+              'published_stac':published_stac}
+    print(result)
 
-    return {'sucess':success,
-                'message':'Published COG and STAC',
-                'input':input,
-                'cog':output_path,
-                'published_cog':published_cog,
-                'published_stac':published_stac}
+    #TODO Clean up / delete local files
+
+    return result
 
 def _handle_args():
 
@@ -105,13 +113,13 @@ def _handle_args():
         help='The output spatial resolution in meters, default is 5'
         )
     parser.add_argument(
-        '-c''--epsg_crs',
+        '-c','--epsg_crs',
         type=int,
         default=3978,
         help="The EPSG number"
         )
     parser.add_argument(
-        '-r''--resampling_method',
+        '-r','--resampling_method',
         type=str,
         default='near',
         choices=[
@@ -122,14 +130,14 @@ def _handle_args():
         help="The GDAL warp resampling method"
         )
     parser.add_argument(
-        '-l''--level',
+        '-l','--level',
         type=str,
         default='stage',
         choices=['prod','stage','dev'],
         help='The datacube publication level'
         )
     parser.add_argument(
-        '-p''prefix',
+        '-p','--prefix',
         type=str,
         default='/store/water/river-ice-canada-archive',
         help='The bucket prefix for the collection')
