@@ -119,6 +119,6 @@ if __name__ == "__main__":
     print(f'The lastRun logging is,  \n{lastRun}')
 """    
 # Run the scripts from the termial 
-# Note that [years] should be a space-separated list of years (e.g., 2005 2006 2007).
-python main.py [root_url] [years] [keyword] [bucket_name] [folder_path] [zip_dir] [proj_epsg] [xRes] [yRes]
+# Note that [years] should be a space-separated list of integers (e.g., 2005 2006 2007).
+python main.py "https://data.eodms-sgdot.nrcan-rncan.gc.ca" 2005 2006 2007 "RiverIce" "nrcan-egs-product-archive" "Datacube/RiverIce/" "zip_test" "EPSG:3978" 5 5
 """
