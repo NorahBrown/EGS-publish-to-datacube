@@ -27,6 +27,7 @@ from ..COG_creation.s3_operations import (upload_file_to_s3,
 def main(infile:Union[str,Path],
          res:Number=5,
          epsg:int=3978,
+         method:str='near',
          level:str='stage',
          prefix:str='/store/water/river-ice-canada-archive'
          ):
@@ -49,7 +50,12 @@ def main(infile:Union[str,Path],
     #print(formatted_datetime)
 
     # Reproject the infile
-    proj_path = reproject_raster(input_path=infile, dstSRS=proj_epsg, xRes=res, yRes=res)
+    proj_path = reproject_raster(
+        input_path=infile,
+        dstSRS=proj_epsg,
+        xRes=res,
+        yRes=res,
+        resampleAlg=method)
 
 
     is_valid = geotiff_to_cog(proj_path, output_path, datetime_value=formatted_datetime)
@@ -69,16 +75,48 @@ def _handle_args():
     parser = argparse.ArgumentParser(description='Process tifs to datacube.')
 
     parser.add_argument('infile', type=str, help='The full path to tif to be converted.')
-    parser.add_argument('resolution', type=int, default=5, help='The output spatial resolution in meters, default is 5')
-    parser.add_argument('-c''--epsg_crs', type=int, default=3978, help="The EPSG number")
-    parser.add_argument('-l''--level', type=str, default='stage', help='The datacube publication level')
-    parser.add_argument('-p''prefix', type=str, default='/store/water/river-ice-canada-archive',help='The bucket prefix for the collection')
+    parser.add_argument(
+        'resolution',
+        type=int,
+        default=5,
+        help='The output spatial resolution in meters, default is 5'
+        )
+    parser.add_argument(
+        '-c''--epsg_crs',
+        type=int,
+        default=3978,
+        help="The EPSG number"
+        )
+    parser.add_argument(
+        '-r''--resampling_method',
+        type=str,
+        default='near',
+        choices=[
+            'near','bilinear','cubic','cubicspline',
+            'lanczos','average','rms','mode','max',
+            'min','med','q1','q3','sum'
+            ],
+        help="The GDAL warp resampling method"
+        )
+    parser.add_argument(
+        '-l''--level',
+        type=str,
+        default='stage',
+        choices=['prod','stage','dev'],
+        help='The datacube publication level'
+        )
+    parser.add_argument(
+        '-p''prefix',
+        type=str,
+        default='/store/water/river-ice-canada-archive',
+        help='The bucket prefix for the collection')
 
     args = parser.parse_args()
 
     main(infile=args.infile,
          res=args.resolution,
          epsg=args.epsg_crs,
+         method=args.resampling_method,
          level=args.level,
          prefix=args.prefix)
     
