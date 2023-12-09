@@ -16,7 +16,7 @@ def print_gdal_info(file_path, print_keys=True):
         print(info) 
     return info
     
-def reproject_raster(input_path, dstSRS, xRes, yRes): 
+def reproject_raster(input_path, dstSRS, xRes, yRes, resampleAlg='near'): 
     """"
     Reproject geotiff or cog to a desinination projection, with a specific xRes and yRes
     :param input_path: file path
@@ -31,7 +31,7 @@ def reproject_raster(input_path, dstSRS, xRes, yRes):
         xRes=xRes, 
         yRes=yRes, 
         targetAlignedPixels=True, 
-        resampleAlg = 'near' , 
+        resampleAlg = resampleAlg , 
         srcNodata=0,
         dstNodata=0  
     )
@@ -39,6 +39,8 @@ def reproject_raster(input_path, dstSRS, xRes, yRes):
     
     # Close the data 
     ds = None 
+
+    return reProj_path
     
 
 def geotiff_to_cog(input_path, output_path, datetime_value):
