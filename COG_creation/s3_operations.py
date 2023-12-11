@@ -1,7 +1,12 @@
-import boto3
-import logging
-from botocore.exceptions import ClientError
+# Python standard library
 import os 
+from pathlib import Path
+import sys
+from typing import Union
+
+# Custom packages
+import boto3
+
 
 def list_files_in_s3(bucket_name, folder_path):
     """ List a filenames in a S3 bucket or a S3 folder  
@@ -37,8 +42,8 @@ def open_file_from_s3(bucket_name, folder_path, file_name):
         response = s3_client.get_object(Bucket=bucket_name, Key=s3_key)
         file_content = response['Body'].read().decode('utf-8')
         return file_content
-    except ClientError as e:
-        logging.error(e)
+    except Exception as e:
+        print(e)
         return False 
 
 def delete_file_s3(bucket_name, folder_path, filename):
@@ -54,8 +59,7 @@ def delete_file_s3(bucket_name, folder_path, filename):
     try: 
         s3_client.delete_object(Bucket=bucket_name, Key=s3_key)
         print(f"Filenames: {filename} deleted sucessfully from bucket {bucket_name} in folder {folder_path}")
-    except ClientError as e: 
-        logging.error(e)
+    except Exception as e: 
         error_msg += e
     return error_msg
 
@@ -70,38 +74,40 @@ def upload_fileContent_to_s3(bucket_name, file_key, file_content):
     obj = s3.Object(bucket_name, file_key)
     try: 
         obj.put(Body=file_content)
-    except ClientError as e:
-        logging.error(e)
-        return False 
-    return True
+    # TODO pass back more informative information
+    except Exception as e:
+        return False,e
+    return True,None
 
-def upload_file_to_s3(bucket_name, folder_path, local_file_path, new_file_name):
+def upload_file_to_s3(bucket_name:str, folder_path:str, local_file_path:Union[str,Path], new_file_name:str):
     """Upload a file to S3 bucket 
     :param bucket: Bucket name
     :param folder_path: S3 folder prefix 
     :param local_file_path: flocal full path for the file to be uploaded 
     :param new_file_name: new file name when uploaded to S3
-    :return: True or False 
+    :return: True, None or False, error 
     """
-    s3_client = boto3.client('s3')       
+    s3_client = boto3.client('s3')
+
     # Concatenate the folder path and file name 
     s3_key = folder_path + new_file_name
     try: 
         # Add public read ACL 
         s3_client.upload_file(local_file_path, bucket_name, s3_key, ExtraArgs={'ACL': 'public-read'})
-    except ClientError as e:
-        logging.error(e)
-        return False 
-    return True 
+    # TODO pass back more information
+    except Exception as e:
+        return False, e
 
-def download_file_from_s3(bucekt_name, folder_path, local_dir, format):
+    return True, None
+
+def download_file_from_s3(bucket_name, folder_path, local_dir, format):
     """
     :param format: string, file extension '.tif'
     """
     # Create a Boto3 S3 client
     s3_client = boto3.client('s3')
     # List objects in the S3 bucket
-    response = s3_client.list_objects_v2(Bucket=bucekt_name, Prefix = folder_path)
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix = folder_path)
     # Iterate over the objects in the bucket
     for obj in response['Contents']:
         # Get the file key (path) of each object
