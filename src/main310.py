@@ -103,20 +103,21 @@ def main(infile:Union[str,Path],
 
 def _handle_args():
 
-    parser = argparse.ArgumentParser(description='Process tifs to datacube.')
+    parser = argparse.ArgumentParser(description='Process tifs to datacube.',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('infile', type=str, help='The full path to tif to be converted.')
     parser.add_argument(
-        'resolution',
+        '-res','--resolution',
         type=int,
         default=5,
-        help='The output spatial resolution in meters, default is 5'
+        #help="The output spatial resolution in meters. default: %(default)s"
+        help="The output spatial resolution in meters."
         )
     parser.add_argument(
         '-c','--epsg_crs',
         type=int,
         default=3978,
-        help="The EPSG number"
+        help="The EPSG number. Ex: 4326."
         )
     parser.add_argument(
         '-r','--resampling_method',
@@ -127,20 +128,21 @@ def _handle_args():
             'lanczos','average','rms','mode','max',
             'min','med','q1','q3','sum'
             ],
-        help="The GDAL warp resampling method"
+        help="The GDAL warp resampling method."
         )
     parser.add_argument(
         '-l','--level',
         type=str,
         default='stage',
         choices=['prod','stage','dev'],
-        help='The datacube publication level'
+        help="The datacube publication level."
         )
     parser.add_argument(
         '-p','--prefix',
         type=str,
         default='/store/water/river-ice-canada-archive',
-        help='The bucket prefix for the collection')
+        help="The bucket prefix for the collection."
+        )
 
     args = parser.parse_args()
 
