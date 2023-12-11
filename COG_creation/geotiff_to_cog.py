@@ -1,6 +1,13 @@
+# Python standard library
+from numbers import Number
 import os 
+from pathlib import Path
+from typing import Union
+
+# Python custom modules
 from osgeo import gdal
 from rio_cogeo.cogeo import cog_validate
+
 def print_gdal_info(file_path, print_keys=True):
     """"
     Print gdal.Info giventhe file_path 
@@ -16,14 +23,15 @@ def print_gdal_info(file_path, print_keys=True):
         print(info) 
     return info
     
-def reproject_raster(input_path, dstSRS, xRes, yRes): 
+def reproject_raster(input_path:Union[str,Path], dstSRS:str, xRes:Number, yRes:Number, resampleAlg:str='near'): 
     """"
     Reproject geotiff or cog to a desinination projection, with a specific xRes and yRes
     :param input_path: file path
     :param dstSRS: desination projection in EPSG:xxxx
     :param xRes and yRes: resolution 
     """
-    reProj_path = input_path.replace('.tif', '_reprj.tif')
+    input_path = Path(input_path)
+    reProj_path = input_path.with_stem(f'{input_path.stem}_reprj')
     # Open input Geotiff, reproject, resize, and close the Geotiff  
     warp_options = gdal.WarpOptions(
         format='GTiff', 
@@ -31,17 +39,20 @@ def reproject_raster(input_path, dstSRS, xRes, yRes):
         xRes=xRes, 
         yRes=yRes, 
         targetAlignedPixels=True, 
-        resampleAlg = 'near' , 
+        resampleAlg = resampleAlg , 
         srcNodata=0,
         dstNodata=0  
     )
-    ds = gdal.Warp(destNameOrDestDS=reProj_path, srcDSOrSrcDSTab=input_path, options=warp_options)
+    gdal.UseExceptions()
+    ds = gdal.Warp(destNameOrDestDS=str(reProj_path), srcDSOrSrcDSTab=str(input_path), options=warp_options)
     
     # Close the data 
     ds = None 
+
+    return reProj_path
     
 
-def geotiff_to_cog(input_path, output_path, datetime_value):
+def geotiff_to_cog(input_path:str, output_path:str, datetime_value:str):
     """
     Translate geotiff to COG using using gdal.translate, and add TIFFTAG_DATETIME
     :param input_path: str, Geotiff path include file name  
@@ -61,6 +72,7 @@ def geotiff_to_cog(input_path, output_path, datetime_value):
         )    
     # Translate the TIFF to COG
     # https://github.com/cogeotiff/rio-cogeo/blob/main/rio_cogeo/cogeo.py
+    gdal.UseExceptions()
     ds = gdal.Translate(output_path, input_path, options=translate_options)   
     # Validate COG   
     is_valid= cog_validate(src_path=output_path)
@@ -68,7 +80,7 @@ def geotiff_to_cog(input_path, output_path, datetime_value):
         msg = f'{output_path} is a valid cloud optimized GeoTIFF'
     else: 
         msg = f'{output_path} is not a valid cloud optimized GeoTIFF \n {is_valid}'
-    print(msg)
+
     # Close the data
     ds = None 
     return msg 
