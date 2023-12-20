@@ -4,3 +4,5 @@ __pycache__/*
 */*/__pycache__/*
 */*/*/__pycache__/*
 tests/data/*.tif
+COG_creation/Test/tiff/*_reprj.tif
+COG_creation/Test/tiff/*_cog*.tif
