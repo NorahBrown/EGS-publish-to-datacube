@@ -19,6 +19,7 @@ from rasterio.crs import CRS
 
 # Datacube custom packages
 from ccmeo_datacube_create_stac.scripts import egs_publish_stac
+from nrcan_ssl.ssl_utils import nrcan_ca_patch, SSLUtils
 
 # Ensure pythonpath has repo root for local module imports
 root = Path(__file__).parents[1]
@@ -36,7 +37,7 @@ def main(infile:Union[str,Path],
          epsg:int=3978,
          method:str='near',
          level:str='stage',
-         prefix:str='/store/water/river-ice-canada-archive'
+         prefix:str='/store/water/river-ice-canada-archive/'
          ):
     """
     Convert input geotiff to cog
@@ -141,7 +142,7 @@ def _handle_args():
     parser.add_argument(
         '-p','--prefix',
         type=str,
-        default='/store/water/river-ice-canada-archive',
+        default='/store/water/river-ice-canada-archive/',
         help="The bucket prefix for the collection."
         )
 
