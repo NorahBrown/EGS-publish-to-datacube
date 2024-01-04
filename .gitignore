@@ -6,3 +6,5 @@ __pycache__/*
 tests/data/*.tif
 COG_creation/Test/tiff/*_reprj.tif
 COG_creation/Test/tiff/*_cog*.tif
+COG_creation/Test/tiff/*.tif.ovr.tmp
+.vscode/launch.json

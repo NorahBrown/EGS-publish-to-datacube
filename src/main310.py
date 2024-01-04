@@ -37,7 +37,7 @@ def main(infile:Union[str,Path],
          epsg:int=3978,
          method:str='near',
          level:str='stage',
-         prefix:str='/store/water/river-ice-canada-archive/'
+         prefix:str='store/water/river-ice-canada-archive/'
          ):
     """
     Convert input geotiff to cog
@@ -142,7 +142,7 @@ def _handle_args():
     parser.add_argument(
         '-p','--prefix',
         type=str,
-        default='/store/water/river-ice-canada-archive/',
+        default='store/water/river-ice-canada-archive/',
         help="The bucket prefix for the collection."
         )
 
