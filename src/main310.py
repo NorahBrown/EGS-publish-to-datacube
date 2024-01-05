@@ -20,6 +20,7 @@ from rasterio.crs import CRS
 # Datacube custom packages
 from ccmeo_datacube_create_stac.scripts import egs_publish_stac
 from nrcan_ssl.ssl_utils import nrcan_ca_patch, SSLUtils
+# import create_thumbnail
 
 # Ensure pythonpath has repo root for local module imports
 root = Path(__file__).parents[1]
@@ -31,6 +32,7 @@ from COG_creation.geotiff_to_cog import (reproject_raster,
                                            geotiff_to_cog)
 from COG_creation.s3_operations import (upload_file_to_s3,
                                           upload_fileContent_to_s3)
+from COG_creation.create_thumbnail import (create_thumbnail)
 
 def main(infile:Union[str,Path],
          res:Number=5,
@@ -70,6 +72,7 @@ def main(infile:Union[str,Path],
 
     # Create COG and check if COG is valid
     valid_cog = geotiff_to_cog(str(proj_path), str(output_path), datetime_value=formatted_datetime)
+    thumbnail = create_thumbnail(str(output_path))
 
     if not valid_cog:
         return {'sucess':success,
@@ -89,6 +92,9 @@ def main(infile:Union[str,Path],
         # Call ddb-api to create and publish STAC
         published_stac = egs_publish_stac.main(text_filter=infile.stem,level=level)
         success = published_stac['success']
+
+
+
     result = {'sucess':success,
               'message':'Published COG and STAC',
               'infile':str(infile.absolute()),
