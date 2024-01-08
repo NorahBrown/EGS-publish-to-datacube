@@ -88,12 +88,12 @@ def upload_file_to_s3(bucket_name:str, folder_path:str, local_file_path:Union[st
     """Upload a file to S3 bucket 
     :param bucket: Bucket name
     :param folder_path: S3 folder prefix 
-    :param local_file_path: flocal full path for the file to be uploaded 
+    :param local_file_path: local full path for the file to be uploaded 
     :param new_file_name: new file name when uploaded to S3
     :return: True, None or False, error 
     """
-    s3_client = boto3.client('s3', verify=False)
-    #s3_client = boto3.client('s3')
+    #s3_client = boto3.client('s3', verify=False)
+    s3_client = boto3.client('s3')
 
     # Concatenate the folder path and file name 
     s3_key = folder_path + new_file_name

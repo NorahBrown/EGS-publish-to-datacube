@@ -52,6 +52,7 @@ def main(infile:Union[str,Path],
     output_path = infile.with_stem(f'{infile.stem}_cog')
     success = False
     published_cog = False
+    thumbnail_creation = False 
     published_stac = False
 
     # Extract datetime from the file name <other>_<date>_<time>.tif
@@ -72,7 +73,6 @@ def main(infile:Union[str,Path],
 
     # Create COG and check if COG is valid
     valid_cog = geotiff_to_cog(str(proj_path), str(output_path), datetime_value=formatted_datetime)
-    thumbnail = create_thumbnail(str(output_path))
 
     if not valid_cog:
         return {'sucess':success,
@@ -82,8 +82,15 @@ def main(infile:Union[str,Path],
                 "valid_cog":valid_cog,
                 'published_cog':False,
                 'published_stac':False}
+    
+    thumbnail_creation, output_thumb, ct_err = create_thumbnail(str(infile),str(output_path))
+    if not thumbnail_creation:
+        return {'sucess':success,
+                'message':'Thunmbnail has not been created',
+                'creationThumbnail error': ct_err}
         
-    published_cog,pc_err = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_path, new_file_name=output_path.name)
+    published_cog, pc_err = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_path, new_file_name=output_path.name)
+    published_thumb, pt_err = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_thumb, new_file_name=output_thumb.name)
     if published_cog:
 
         # TODO upload side cars
