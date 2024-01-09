@@ -10,9 +10,25 @@ Code Summary
 
  Example
  -------
+    Env variables
+    -------------
+    # ddb-api authentication
+    DDB_AUTH_USER=XXX
+    DDB_AUTH_PASSWORD=XXX
+
+    # AWS credentials
+    AWS_ACCESS_KEY_ID=XXX
+    AWS_SECRET_ACCESS_KEY=XXX
+    AWS_SESSION_TOKEN=XXX
+
     CLI
     ---
-    python main310.py <image.tif> -l stage
+    # python main310.py <image.tif> -l stage
+    python main310.py COG_creation/Test/tiff/RiverIce_CAN_ON_Moose_20160503_232950.tif -l stage
+
+    Container
+    ---------
+    See Containerfile.gdal-python
 
 """
 # Python standard library
