@@ -14,7 +14,7 @@ args = parser.parse_args()
 directory = args.cog_path
 #directory = 'C:/Users/xcai/Documents/EGS_projects/RiverIce/cog/'
 """
-def create_thumbnail(raster,directory):
+def create_thumbnail(raster):
 
     rds = gdal.Open(raster)
     height = rds.RasterYSize

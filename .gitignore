@@ -8,3 +8,5 @@ COG_creation/Test/tiff/*_reprj.tif
 COG_creation/Test/tiff/*_cog*.tif
 COG_creation/Test/tiff/*.tif.ovr.tmp
 .vscode/launch.json
+COG_creation/Test/tiff/RiverIce_CAN_ON_Moose_20160503_232950_thumb.png
+COG_creation/Test/tiff/RiverIce_CAN_ON_Moose_20160503_232950_thumb.png.aux.xml

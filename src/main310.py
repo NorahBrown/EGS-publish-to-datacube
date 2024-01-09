@@ -83,14 +83,29 @@ def main(infile:Union[str,Path],
                 'published_cog':False,
                 'published_stac':False}
     
-    thumbnail_creation, output_thumb, ct_err = create_thumbnail(str(infile),str(output_path))
+    # Create a thumbnail and check the result
+    thumbnail_creation, output_thumb, ct_err = create_thumbnail(str(infile))
     if not thumbnail_creation:
         return {'sucess':success,
                 'message':'Thunmbnail has not been created',
                 'creationThumbnail error': ct_err}
         
-    published_cog, pc_err = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_path, new_file_name=output_path.name)
+    """     
+    # Create a metadata json file and check the result
+    json_creation, output_thumb, ct_err = create_thumbnail(str(infile))
+    if not json_creation:
+        return {'sucess':success,
+                'message':'Thunmbnail has not been created',
+                'creationThumbnail error': ct_err} 
+    """
+    
     published_thumb, pt_err = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_thumb, new_file_name=output_thumb.name)
+    if not published_thumb:
+        return {'succes':published_thumb,
+                'message':'Thunmbnail has not been published',
+                'published thumbnail error': pt_err}
+
+    published_cog, pc_err = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_path, new_file_name=output_path.name)
     if published_cog:
 
         # TODO upload side cars
@@ -99,8 +114,6 @@ def main(infile:Union[str,Path],
         # Call ddb-api to create and publish STAC
         published_stac = egs_publish_stac.main(text_filter=infile.stem,level=level)
         success = published_stac['success']
-
-
 
     result = {'sucess':success,
               'message':'Published COG and STAC',
