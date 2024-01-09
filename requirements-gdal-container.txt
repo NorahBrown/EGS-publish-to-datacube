@@ -1,0 +1,6 @@
+  # gdal installed as part of osgeo image
+  rasterio
+  boto3
+  rio-cogeo
+  # Datacube package hosted on git.geoproc
+  ccmeo-datacube-create-stac@git+https://git.geoproc.geogc.ca/datacube/metadata/create-stac.git

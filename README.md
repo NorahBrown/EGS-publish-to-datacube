@@ -9,13 +9,44 @@ The conda env can be created directly from the yml file.
  ```shell
  conda env create -f egs_env.yml
  ```
-## Running the code
+## Running the code command line
 ### Setting environment variables
  - set the AWS security credentials
  - set the ddb authentication env variables
  ```shell
  (SET|export) DDB_AUTH_USER=<username>
  (SET|export) DDB_AUTH_PASSWORD=<password>
+ ```
+ ### Create COG, publish to datacube, create and publish STAC md
+ ```shell
+ # To list help
+ python {path-to}/src/main310.py -h
+
+ # To cogify, publish and create stac
+ python {path-to}/src/main310.py {filename} {resoltion}
+ ```
+
+ ## Running the code in a container
+ See the full instruction in the Containerfile top level [comments](/Containerfile.gdal-python)
+ ### Files required for the image build
+  - .git-credentials: holds the username and access token for git.geoproc
+ ### Files Required for container run
+  - .env : holds the AWS and DDB authentication
+ ### Example files
+ #### .git-credentials
+ ```shell
+ https://{git.geoproc-user-name}:{git-geproc-access-token}@git.geoproc.geogc.ca
+ ```
+ ### .env
+ ```shell
+ # ddb-api authentication
+ DDB_AUTH_USER={ddb-user}
+ DDB_AUTH_PASSWORD={ddb-password}
+
+ # AWS credentials
+ AWS_ACCESS_KEY_ID={AWS_ACCESS_KEY_ID}
+ AWS_SECRET_ACCESS_KEY={AWS_SECRET_ACCESS_KEY}
+ AWS_SESSION_TOKEN={AWS_SESSION_TOKEN}
  ```
  ## Python 3.10 code management
   - all new python 3.10 code is under the src directory

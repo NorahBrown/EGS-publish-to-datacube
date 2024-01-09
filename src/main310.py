@@ -107,7 +107,7 @@ def main(infile:Union[str,Path],
 
     published_cog, pc_err = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_path, new_file_name=output_path.name)
     if published_cog:
-
+        pass
         # TODO upload side cars
         # upload_fileContent_to_s3(bucket, file_key=prefix + 'is-active.txt', file_content=is_active_as_string)
 
