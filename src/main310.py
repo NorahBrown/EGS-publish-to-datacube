@@ -1,9 +1,19 @@
 """
 Datacube pipeline COG and STAC creation and publication
 
-Reprojects and cogifies an input tif
-Publishes it to the datacube repo
-Send create and publishe STAC command to datacube
+Code Summary
+------------
+ - Reprojects and cogifies an input tif
+ - Publishes COG to the datacube repo
+ - Publishes ancilliary (sidecar) files to the datacube repo (in progress)
+ - Sends create and publish STAC command to datacube ddb-api
+
+ Example
+ -------
+    CLI
+    ---
+    python main310.py <image.tif> -l stage
+
 """
 # Python standard library
 import argparse
@@ -113,6 +123,7 @@ def main(infile:Union[str,Path],
 
         # Call ddb-api to create and publish STAC
         published_stac = egs_publish_stac.main(text_filter=infile.stem,level=level)
+        # TODO extract link to STAC API item
         success = published_stac['success']
 
     result = {'sucess':success,
@@ -135,7 +146,7 @@ def _handle_args():
 
     parser.add_argument('infile', type=str, help='The full path to tif to be converted.')
     parser.add_argument(
-        '-res','--resolution',
+        '-r','--resolution',
         type=int,
         default=5,
         #help="The output spatial resolution in meters. default: %(default)s"
@@ -148,7 +159,7 @@ def _handle_args():
         help="The EPSG number. Ex: 4326."
         )
     parser.add_argument(
-        '-r','--resampling_method',
+        '-m','--resampling_method',
         type=str,
         default='near',
         choices=[
