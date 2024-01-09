@@ -7,6 +7,11 @@ from typing import Union
 # Custom packages
 import boto3
 
+from nrcan_ssl.ssl_utils import nrcan_ca_patch, SSLUtils
+    # ...
+ssl_utils = SSLUtils()
+ssl_utils.set_nrcan_ssl()
+
 
 def list_files_in_s3(bucket_name, folder_path):
     """ List a filenames in a S3 bucket or a S3 folder  
@@ -83,10 +88,11 @@ def upload_file_to_s3(bucket_name:str, folder_path:str, local_file_path:Union[st
     """Upload a file to S3 bucket 
     :param bucket: Bucket name
     :param folder_path: S3 folder prefix 
-    :param local_file_path: flocal full path for the file to be uploaded 
+    :param local_file_path: local full path for the file to be uploaded 
     :param new_file_name: new file name when uploaded to S3
     :return: True, None or False, error 
     """
+    #s3_client = boto3.client('s3', verify=False)
     s3_client = boto3.client('s3')
 
     # Concatenate the folder path and file name 
@@ -133,6 +139,8 @@ def list_files_with_extension(directory, extension):
             filenames.append(file)
     return filenames
 
+
+ssl_utils.unset_nrcan_ssl()
 """
 # Test 
 #bucket_name = 'nrcan-egs-product-archive'
