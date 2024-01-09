@@ -81,6 +81,19 @@ def main(infile:Union[str,Path],
     thumbnail_creation = False 
     published_stac = False
 
+    # Set the datacube AWS cannonical ID for s3 object permissions
+    if level == 'prod':
+        dc_aws_id = 'id="b51b8d25062b67c1898da5e3b21415897431ff8c969c1cc16f76d54a189cb08c"'
+    else:
+        # Default to stage
+        dc_aws_id = 'id="1146f3529acf9b3cbfc11dbddcd9b4424910c150b022e78558272d726525a30f"'
+    # Set the acl headers for datacube full control and public read
+    
+    acl = extra_args = {
+        'GrantRead': 'uri="http://acs.amazonaws.com/groups/global/AllUsers"', 
+        'GrantFullControl': dc_aws_id,}
+
+
     # Extract datetime from the file name <other>_<date>_<time>.tif
     parts = infile.stem.split('_')
     timestamp =f'{parts[-2]}T{parts[-1]}'
@@ -125,13 +138,23 @@ def main(infile:Union[str,Path],
                 'creationThumbnail error': ct_err} 
     """
     
-    published_thumb, pt_err = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_thumb, new_file_name=output_thumb.name)
+    published_thumb, pt_err = upload_file_to_s3(
+        bucket,
+        folder_path=prefix,
+        local_file_path=output_thumb,
+        new_file_name=output_thumb.name,
+        extra_args=acl)
     if not published_thumb:
         return {'succes':published_thumb,
                 'message':'Thunmbnail has not been published',
                 'published thumbnail error': pt_err}
 
-    published_cog, pc_err = upload_file_to_s3(bucket, folder_path=prefix, local_file_path=output_path, new_file_name=output_path.name)
+    published_cog, pc_err = upload_file_to_s3(
+        bucket,
+        folder_path=prefix,
+        local_file_path=output_path,
+        new_file_name=output_path.name,
+        extra_args=acl)
     if published_cog:
         pass
         # TODO upload side cars
@@ -140,6 +163,7 @@ def main(infile:Union[str,Path],
         # Call ddb-api to create and publish STAC
         published_stac = egs_publish_stac.main(text_filter=infile.stem,level=level)
         # TODO extract link to STAC API item
+        print(published_stac)
         success = published_stac['success']
 
     result = {'sucess':success,

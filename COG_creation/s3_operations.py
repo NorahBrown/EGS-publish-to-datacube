@@ -68,28 +68,34 @@ def delete_file_s3(bucket_name, folder_path, filename):
         error_msg += e
     return error_msg
 
-def upload_fileContent_to_s3(bucket_name, file_key, file_content):
+def upload_fileContent_to_s3(bucket_name:str, file_key:str, file_content:str,extra_args:dict=None):
     """
     Given the text content, upload the content to S3 as a text file 
     :param bucket name: name of the bucket 
     :param file_key: S3 folder_path + 'log.txt'
-    :param: file_content: text body 
+    :param: file_content: text body
+    :param extra_args: extra_args see boto3 s3 upload_file ExtraArgs
     """
     s3 = boto3.resource('s3')
     obj = s3.Object(bucket_name, file_key)
+
     try: 
-        obj.put(Body=file_content)
+        if extra_args:
+            obj.put(Body=file_content,**extra_args)
+        else:
+            obj.put
     # TODO pass back more informative information
     except Exception as e:
         return False,e
     return True,None
 
-def upload_file_to_s3(bucket_name:str, folder_path:str, local_file_path:Union[str,Path], new_file_name:str):
+def upload_file_to_s3(bucket_name:str, folder_path:str, local_file_path:Union[str,Path], new_file_name:str,extra_args:dict=None):
     """Upload a file to S3 bucket 
     :param bucket: Bucket name
     :param folder_path: S3 folder prefix 
     :param local_file_path: local full path for the file to be uploaded 
     :param new_file_name: new file name when uploaded to S3
+    :param extra_args: extra_args see boto3 s3 upload_file ExtraArgs
     :return: True, None or False, error 
     """
     #s3_client = boto3.client('s3', verify=False)
@@ -99,7 +105,7 @@ def upload_file_to_s3(bucket_name:str, folder_path:str, local_file_path:Union[st
     s3_key = folder_path + new_file_name
     try: 
         # Add public read ACL 
-        s3_client.upload_file(local_file_path, bucket_name, s3_key, ExtraArgs={'ACL': 'public-read'})
+        s3_client.upload_file(local_file_path, bucket_name, s3_key, ExtraArgs=extra_args)
     # TODO pass back more information
     except Exception as e:
         return False, e
