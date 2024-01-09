@@ -1,0 +1,28 @@
+#==============================================================================
+# Using OSGeo GDAL container as base
+
+# Podman commands
+# ---------------
+# # Initialise the podman machine
+# podman machine init
+#
+# # Start the podmain machine
+# podman machine start
+#
+# # (Optional) pull the image to local
+# podman pull <FROM image>
+#
+# # Build Image
+# podman build -t gdal-only-image:latest -f Containerfile.gdal-only
+#
+# # Run image and launch bash
+# podman container run -d -it --name gdal-only-container --env-file .env localhost/gdal-only-image:latest
+#
+# # In seperate shell,get the local container id
+# podman ps
+#=========================
+
+# Container image https://github.com/OSGeo/gdal/pkgs/container/gdal
+FROM ghcr.io/osgeo/gdal:ubuntu-small-3.8.1
+# FROM ghcr.io/osgeo/gdal:ubuntu-small-latest-arm64
+
