@@ -161,7 +161,8 @@ def main(infile:Union[str,Path],
         # upload_fileContent_to_s3(bucket, file_key=prefix + 'is-active.txt', file_content=is_active_as_string)
 
         # Call ddb-api to create and publish STAC
-        published_stac = egs_publish_stac.main(text_filter=input.stem,level=level)
+        published_stac = egs_publish_stac.main(text_filter=infile.stem,level=level)
+        # TODO extract link to STAC API item
         print(published_stac)
         success = published_stac['success']
     result = {'sucess':success,
