@@ -162,10 +162,7 @@ def main(infile:Union[str,Path],
 
         # Call ddb-api to create and publish STAC
         published_stac = egs_publish_stac.main(text_filter=input.stem,level=level)
-<<<<<<< HEAD
         print(published_stac)
-=======
->>>>>>> df59c1ad1dbc1f2f5a8fc44bcbc58e9e7368bbc5
         success = published_stac['success']
     result = {'sucess':success,
               'message':'Published COG and STAC',
