@@ -165,7 +165,6 @@ def main(infile:Union[str,Path],
         # TODO extract link to STAC API item
         print(published_stac)
         success = published_stac['success']
-
     result = {'sucess':success,
               'message':'Published COG and STAC',
               'infile':str(infile.absolute()),
@@ -220,8 +219,7 @@ def _handle_args():
         '-p','--prefix',
         type=str,
         default='store/water/river-ice-canada-archive/',
-        help="The bucket prefix for the collection."
-        )
+        help='The bucket prefix for the collection')
 
     args = parser.parse_args()
 
