@@ -58,7 +58,8 @@ from COG_creation.geotiff_to_cog import (reproject_raster,
                                            geotiff_to_cog)
 from COG_creation.s3_operations import (upload_file_to_s3,
                                           upload_fileContent_to_s3)
-from COG_creation.create_thumbnail import (create_thumbnail)
+from COG_creation.create_thumbnail import create_thumbnail
+from COG_creation.create_json import create_json
 
 def main(infile:Union[str,Path],
          res:Number=5,
@@ -76,10 +77,15 @@ def main(infile:Union[str,Path],
     bucket = f'datacube-{level}-data-public'
     proj_epsg = CRS.from_epsg(epsg)
     output_path = infile.with_stem(f'{infile.stem}_cog')
+    ftp_path="https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS"
+
     success = False
     published_cog = False
     thumbnail_creation = False 
+    json_creation = False 
     published_stac = False
+    published_thumb = False
+    published_json = False
 
     # Set the datacube AWS cannonical ID for s3 object permissions
     if level == 'prod':
@@ -97,6 +103,15 @@ def main(infile:Union[str,Path],
     # Extract datetime from the file name <other>_<date>_<time>.tif
     parts = infile.stem.split('_')
     timestamp =f'{parts[-2]}T{parts[-1]}'
+
+    # Extract value for creating FTP path
+    product = parts[0]
+    country = parts[1]
+    province = parts[2]
+    year = (parts[-2])[0:4]
+    ftp_url = f'{ftp_path}/{year}/{product}/{country}/{province}/{infile.stem}.zip'
+    json_file=f'{infile.parent}\{infile.stem}.json'
+
 
     # Reformat to TIFFTAG_DATETIME format
     datetime_obj = datetime.strptime(timestamp, '%Y%m%dT%H%M%S')
@@ -123,20 +138,12 @@ def main(infile:Union[str,Path],
                 'published_stac':False}
     
     # Create a thumbnail and check the result
-    thumbnail_creation, output_thumb, ct_err = create_thumbnail(str(infile))
+    thumbnail_creation, outfile_thumb, ct_err = create_thumbnail(str(infile))
     if not thumbnail_creation:
         return {'sucess':success,
-                'message':'Thunmbnail has not been created',
+                'message':'Thumbnail has not been created',
                 'creationThumbnail error': ct_err}
         
-    """     
-    # Create a metadata json file and check the result
-    json_creation, output_thumb, ct_err = create_thumbnail(str(infile))
-    if not json_creation:
-        return {'sucess':success,
-                'message':'Thunmbnail has not been created',
-                'creationThumbnail error': ct_err} 
-    """
     
     published_thumb, pt_err = upload_file_to_s3(
         bucket,
@@ -146,8 +153,39 @@ def main(infile:Union[str,Path],
         extra_args=acl)
     if not published_thumb:
         return {'succes':published_thumb,
-                'message':'Thunmbnail has not been published',
+                'message':'Thumbnail has not been published',
                 'published thumbnail error': pt_err}
+
+
+ # Create a metadata JSON file and check the result
+    json_creation, jc_err = create_json(json_file,ftp_url)
+    #createJson, cJ_err = upload_fileContent_to_s3(bucket, file_key=prefix + json_file, file_content=ftp_url)
+    if not json_creation:
+        result = {'succes':json_creation,
+                'message':'JSON file has not been created',
+                'Create thumbnail error': jc_err}
+
+        return result
+    json_file= Path(json_file)
+
+    published_json, pj_err = upload_file_to_s3(
+        bucket,
+        folder_path=prefix,
+        local_file_path=json_file,
+        new_file_name=json_file.name,
+        extra_args=acl)
+
+    if not published_json:
+        message = 'The JSON file has not been published'
+        
+        if __name__ == '__main__':
+            # Pass back command line error
+            return 1, message
+        else:
+            # Return module import error
+            return {'succes':published_json,
+                    'message':message,
+                    'published thumbnail error': pj_err}
 
     published_cog, pc_err = upload_file_to_s3(
         bucket,
@@ -155,8 +193,9 @@ def main(infile:Union[str,Path],
         local_file_path=output_path,
         new_file_name=output_path.name,
         extra_args=acl)
+
     if published_cog:
-        pass
+
         # TODO upload side cars
         # upload_fileContent_to_s3(bucket, file_key=prefix + 'is-active.txt', file_content=is_active_as_string)
 
@@ -176,7 +215,6 @@ def main(infile:Union[str,Path],
     print(result)
 
     #TODO Clean up / delete local files
-
     return result
 
 def _handle_args():

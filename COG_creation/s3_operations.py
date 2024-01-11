@@ -103,6 +103,8 @@ def upload_file_to_s3(bucket_name:str, folder_path:str, local_file_path:Union[st
 
     # Concatenate the folder path and file name 
     s3_key = folder_path + new_file_name
+    print(s3_key, bucket_name, local_file_path)
+
     try: 
         # Add public read ACL 
         s3_client.upload_file(local_file_path, bucket_name, s3_key, ExtraArgs=extra_args)
