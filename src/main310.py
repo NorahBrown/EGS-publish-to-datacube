@@ -57,7 +57,7 @@ if str(root.absolute()) not in sys.path:
 from COG_creation.geotiff_to_cog import (reproject_raster,
                                            geotiff_to_cog)
 from COG_creation.s3_operations import (upload_file_to_s3,
-                                          upload_fileContent_to_s3)
+                                          copy_file)
 from COG_creation.create_thumbnail import create_thumbnail
 from COG_creation.create_json import create_json
 
@@ -77,7 +77,7 @@ def main(infile:Union[str,Path],
     bucket = f'datacube-{level}-data-public'
     proj_epsg = CRS.from_epsg(epsg)
     output_path = infile.with_stem(f'{infile.stem}_cog')
-    ftp_path="https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS"
+    
 
     success = False
     published_cog = False
@@ -90,9 +90,12 @@ def main(infile:Union[str,Path],
     # Set the datacube AWS cannonical ID for s3 object permissions
     if level == 'prod':
         dc_aws_id = 'id="b51b8d25062b67c1898da5e3b21415897431ff8c969c1cc16f76d54a189cb08c"'
+        ftp_path="https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS"
     else:
         # Default to stage
         dc_aws_id = 'id="1146f3529acf9b3cbfc11dbddcd9b4424910c150b022e78558272d726525a30f"'
+        ftp_path="https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS/outgoing/EGSDevProducts"
+
     # Set the acl headers for datacube full control and public read
     
     acl = extra_args = {
@@ -148,8 +151,8 @@ def main(infile:Union[str,Path],
     published_thumb, pt_err = upload_file_to_s3(
         bucket,
         folder_path=prefix,
-        local_file_path=output_thumb,
-        new_file_name=output_thumb.name,
+        local_file_path=outfile_thumb,
+        new_file_name=outfile_thumb.name,
         extra_args=acl)
     if not published_thumb:
         return {'succes':published_thumb,
@@ -157,9 +160,8 @@ def main(infile:Union[str,Path],
                 'published thumbnail error': pt_err}
 
 
- # Create a metadata JSON file and check the result
+    # Create a metadata JSON file and check the result
     json_creation, jc_err = create_json(json_file,ftp_url)
-    #createJson, cJ_err = upload_fileContent_to_s3(bucket, file_key=prefix + json_file, file_content=ftp_url)
     if not json_creation:
         result = {'succes':json_creation,
                 'message':'JSON file has not been created',
@@ -177,7 +179,6 @@ def main(infile:Union[str,Path],
 
     if not published_json:
         message = 'The JSON file has not been published'
-        
         if __name__ == '__main__':
             # Pass back command line error
             return 1, message
@@ -186,6 +187,51 @@ def main(infile:Union[str,Path],
             return {'succes':published_json,
                     'message':message,
                     'published thumbnail error': pj_err}
+        
+    """
+    # Create a SVG legend file and check the result
+    legend_file_svg_ori=f'riverice_legend.svg'
+    legend_file_svg=f'{infile.stem}_legend.svg'
+
+    legend_creation_svg = copy_file(bucket,
+                                prefix,
+                                legend_file_svg_ori,
+                                bucket_name_dest=bucket,
+                                prefix_dest=prefix,
+                                filename_dest=legend_file_svg,
+                                kwarg=acl)
+    if not legend_creation_svg:
+        message ="The SVG legend file has NOT been created"
+        if __name__ == '__main__':
+            # Pass back command line error
+            return 1, message
+        else:
+            # Return module import error
+            return {'succes':legend_creation_svg,
+                    'message':message}
+
+    """     
+    # Create a PNG legend file and check the result
+    legend_file_png_ori=f'riverice_legend.png'
+    legend_file_png=f'{infile.stem}_legend.png'
+    legend_creation_png = copy_file(bucket,
+                                    prefix,
+                                    legend_file_png_ori,
+                                    bucket_name_dest=bucket,
+                                    prefix_dest=prefix,
+                                    filename_dest=legend_file_png,
+                                    kwarg=acl)
+
+    if not legend_creation_png:
+        message ="The PNG legend file has NOT been created"
+        if __name__ == '__main__':
+            # Pass back command line error
+            return 1, message
+        else:
+            # Return module import error
+            return {'succes':legend_creation_png,
+                    'message':message
+                    }
 
     published_cog, pc_err = upload_file_to_s3(
         bucket,
