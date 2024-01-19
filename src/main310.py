@@ -5,7 +5,7 @@ Code Summary
 ------------
  - Reprojects and cogifies an input tif
  - Publishes COG to the datacube repo
- - Publishes ancilliary (sidecar) files to the datacube repo (in progress)
+ - Publishes ancilliary (thumbnail, legend, url package(json)) files to the datacube repo
  - Sends create and publish STAC command to datacube ddb-api
 
  Example
@@ -45,8 +45,6 @@ from rasterio.crs import CRS
 
 # Datacube custom packages
 from ccmeo_datacube_create_stac.scripts import egs_publish_stac
-from nrcan_ssl.ssl_utils import nrcan_ca_patch, SSLUtils
-# import create_thumbnail
 
 # Ensure pythonpath has repo root for local module imports
 root = Path(__file__).parents[1]
@@ -76,7 +74,8 @@ def main(infile:Union[str,Path],
     infile = Path(infile)
     bucket = f'datacube-{level}-data-public'
     proj_epsg = CRS.from_epsg(epsg)
-    output_path = infile.with_stem(f'{infile.stem}_cog')
+    output_path = infile.with_stem(f'{infile.stem}')
+    ftp_path="https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS"
     
 
     success = False
@@ -90,11 +89,11 @@ def main(infile:Union[str,Path],
     # Set the datacube AWS cannonical ID for s3 object permissions
     if level == 'prod':
         dc_aws_id = 'id="b51b8d25062b67c1898da5e3b21415897431ff8c969c1cc16f76d54a189cb08c"'
-        ftp_path="https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS"
     else:
         # Default to stage
         dc_aws_id = 'id="1146f3529acf9b3cbfc11dbddcd9b4424910c150b022e78558272d726525a30f"'
-        ftp_path="https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS/outgoing/EGSDevProducts"
+        # Only for testing 
+        # ftp_path="https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS/outgoing/EGSDevProducts"
 
     # Set the acl headers for datacube full control and public read
     
