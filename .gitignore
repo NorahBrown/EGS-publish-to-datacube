@@ -2,10 +2,5 @@
 .git-credentials
 .vscode/launch.json
 tests/data/*.tif
-COG_creation/__pycache__
 __pycache__/
-*/__pycache__/
-*/*/__pycache__/
-*/*/*/__pycache__/
-COG_creation/Test/tiff/*
 NRCAN-Root-2019-B64.cer

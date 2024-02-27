@@ -13,5 +13,8 @@
  - file name and datetime conversions using pathlib fxns
  - upstream repo is a fork of github EGS-publish-to-datacube
  - merged datacube/pipeline/egs repo with EGS-publish-to-datacube
+ - all code under src, src/utilities or script
 ### Removed
+- COG_creation folder and all references to it
+- all referencs to python 3.6 instance including egs_env36.yml
 ### Fixed
