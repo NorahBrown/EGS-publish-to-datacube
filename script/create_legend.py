@@ -44,7 +44,7 @@ if str(root.absolute()) not in sys.path:
 
 # Local modules
 
-from COG_creation.s3_operations import (copy_file)
+from src.utils.s3_operations import (copy_file)
 
 def main(infile:Union[str,Path],
          level:str='stage',
