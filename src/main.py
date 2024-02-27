@@ -46,18 +46,11 @@ from rasterio.crs import CRS
 # Datacube custom packages
 from ccmeo_datacube_create_stac.scripts import egs_publish_stac
 
-# Ensure pythonpath has repo root for local module imports
-root = Path(__file__).parents[1]
-if str(root.absolute()) not in sys.path:
-    sys.path.insert(0,str(root.absolute()))
-
 # Local modules
-from COG_creation.geotiff_to_cog import (reproject_raster,
-                                           geotiff_to_cog)
-from COG_creation.s3_operations import (upload_file_to_s3,
-                                          copy_file)
-from COG_creation.create_thumbnail import create_thumbnail
-from COG_creation.create_json import create_json
+from .geotiff_to_cog import (reproject_raster, geotiff_to_cog)
+from .s3_operations import (upload_file_to_s3, copy_file)
+from .create_thumbnail import create_thumbnail
+from .create_json import create_json
 
 def main(infile:Union[str,Path],
          res:Number=5,
