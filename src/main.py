@@ -47,10 +47,10 @@ from rasterio.crs import CRS
 from ccmeo_datacube_create_stac.scripts import egs_publish_stac
 
 # Local modules
-from .geotiff_to_cog import (reproject_raster, geotiff_to_cog)
-from .s3_operations import (upload_file_to_s3, copy_file)
-from .create_thumbnail import create_thumbnail
-from .create_json import create_json
+from .utils.geotiff_to_cog import (reproject_raster, geotiff_to_cog)
+from .utils.s3_operations import (upload_file_to_s3, copy_file)
+from .utils.create_thumbnail import create_thumbnail
+from .utils.create_json import create_json
 
 def main(infile:Union[str,Path],
          res:Number=5,
