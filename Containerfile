@@ -70,9 +70,7 @@ RUN apt-get install -y  git
 # Copy code into the apps venv
 COPY requirements-gdal-container.txt $APPDIR/$APPNAME-requirements.txt
 COPY src $APPDIR/$APPNAME/src
-COPY COG_creation/geotiff_to_cog.py $APPDIR/$APPNAME/COG_creation/geotiff_to_cog.py
-COPY COG_creation/s3_operations.py $APPDIR/$APPNAME/COG_creation/s3_operations.py
-
+COPY script $APPDIR/$APPNAME/script
 
 # Manage the NRCan custom certificate to ensure SSL is supported everywhere
 COPY NRCAN-Root-2019-B64.cer .
@@ -84,12 +82,6 @@ ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 ENV AWS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-
-
-# Set up git.geoproc access through local .git-credentials file
-COPY .git-credentials .
-RUN cp .git-credentials ~/.git-credentials
-RUN git config --global credential.helper store
 
 # install dependencies
 RUN pip3 install --upgrade -r $APPDIR/$APPNAME-requirements.txt
