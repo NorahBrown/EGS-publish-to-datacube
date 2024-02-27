@@ -1,6 +1,8 @@
 .env
 .git-credentials
 .vscode/launch.json
-tests/data/*.tif
 __pycache__/
 NRCAN-Root-2019-B64.cer
+tests/data/*_reprj.tif
+tests/data/*.png
+tests/data/*.png.*

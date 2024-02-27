@@ -23,12 +23,13 @@ Code Summary
 
     CLI
     ---
-    # python main310.py <image.tif> -l stage
-    python main310.py COG_creation/Test/tiff/RiverIce_CAN_ON_Moose_20160503_232950.tif -l stage
+    # usage: main.py [-h] [-r RESOLUTION] [-c EPSG_CRS] [-m {near,bilinear,cubic,cubicspline,lanczos,average,rms,mode,max,min,med,q1,q3,sum}] [-l {prod,stage,dev}] [-p PREFIX] infile
+    # python main.py <image.tif> -l stage
+    python main.py tests/data/RiverIce_CAN_ON_Moose_20160503_232950.tif -l stage -r 30 - m mode
 
     Container
     ---------
-    See Containerfile.gdal-python
+    See Containerfile
 
 """
 # Python standard library
@@ -47,10 +48,13 @@ from rasterio.crs import CRS
 from ccmeo_datacube_create_stac.scripts import egs_publish_stac
 
 # Local modules
-from .utils.geotiff_to_cog import (reproject_raster, geotiff_to_cog)
-from .utils.s3_operations import (upload_file_to_s3, copy_file)
-from .utils.create_thumbnail import create_thumbnail
-from .utils.create_json import create_json
+src_root = Path(__file__)
+if str(src_root) not in sys.path:
+    sys.path.insert(0,str(src_root))
+from utils.geotiff_to_cog import (reproject_raster, geotiff_to_cog)
+from utils.s3_operations import (upload_file_to_s3, copy_file)
+from utils.create_thumbnail import create_thumbnail
+from utils.create_json import create_json
 
 def main(infile:Union[str,Path],
          res:Number=5,
