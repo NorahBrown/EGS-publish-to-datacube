@@ -31,6 +31,13 @@ Code Summary
     ---------
     See Containerfile
 
+    Copyright
+    ---------
+    Developed by Xinli Cai, Elise Bergeron, Norah Brown - Natural Resources Canada
+    Crown Copyright as described in section 12 of
+    Copyright Act (R.S.C., 1985, c. C-42)
+    © His Majesty the King in Right of Canada,
+    as represented by the Minister of Natural Resources Canada, 2024
 """
 # Python standard library
 import argparse
