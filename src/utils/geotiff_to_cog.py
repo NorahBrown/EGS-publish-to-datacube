@@ -17,7 +17,7 @@ def print_gdal_info(file_path, print_keys=True):
     if print_keys: 
         print("Raster Information Keys:")
         for key, value in info.items():
-            print(f"------------------------------------------------------ \n {key}: {value}")
+            print(f"{key}: {value}")
     else: 
         print('gdal info: ')
         print(info) 

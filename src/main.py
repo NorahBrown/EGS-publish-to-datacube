@@ -5,7 +5,7 @@ Code Summary
 ------------
  - Reprojects and cogifies an input tif
  - Publishes COG to the datacube repo
- - Publishes ancilliary (sidecar) files to the datacube repo (in progress)
+ - Publishes ancilliary (thumbnail, legend, url package(json)) files to the datacube repo
  - Sends create and publish STAC command to datacube ddb-api
 
  Example
@@ -23,13 +23,21 @@ Code Summary
 
     CLI
     ---
-    # python main310.py <image.tif> -l stage
-    python main310.py COG_creation/Test/tiff/RiverIce_CAN_ON_Moose_20160503_232950.tif -l stage
+    # usage: main.py [-h] [-r RESOLUTION] [-c EPSG_CRS] [-m {near,bilinear,cubic,cubicspline,lanczos,average,rms,mode,max,min,med,q1,q3,sum}] [-l {prod,stage,dev}] [-p PREFIX] infile
+    # python main.py <image.tif> -l stage
+    python main.py tests/data/RiverIce_CAN_ON_Moose_20160503_232950.tif -l stage -r 30 - m mode
 
     Container
     ---------
-    See Containerfile.gdal-python
+    See Containerfile
 
+    Copyright
+    ---------
+    Developed by Xinli Cai, Elise Bergeron, Norah Brown - Natural Resources Canada
+    Crown Copyright as described in section 12 of
+    Copyright Act (R.S.C., 1985, c. C-42)
+    © His Majesty the King in Right of Canada,
+    as represented by the Minister of Natural Resources Canada, 2024
 """
 # Python standard library
 import argparse
@@ -45,20 +53,15 @@ from rasterio.crs import CRS
 
 # Datacube custom packages
 from ccmeo_datacube_create_stac.scripts import egs_publish_stac
-from nrcan_ssl.ssl_utils import nrcan_ca_patch, SSLUtils
-# import create_thumbnail
-
-# Ensure pythonpath has repo root for local module imports
-root = Path(__file__).parents[1]
-if str(root.absolute()) not in sys.path:
-    sys.path.insert(0,str(root.absolute()))
 
 # Local modules
-from COG_creation.geotiff_to_cog import (reproject_raster,
-                                           geotiff_to_cog)
-from COG_creation.s3_operations import (upload_file_to_s3,
-                                          upload_fileContent_to_s3)
-from COG_creation.create_thumbnail import (create_thumbnail)
+src_root = Path(__file__)
+if str(src_root) not in sys.path:
+    sys.path.insert(0,str(src_root))
+from utils.geotiff_to_cog import (reproject_raster, geotiff_to_cog)
+from utils.s3_operations import (upload_file_to_s3, copy_file)
+from utils.create_thumbnail import create_thumbnail
+from utils.create_json import create_json
 
 def main(infile:Union[str,Path],
          res:Number=5,
@@ -75,11 +78,17 @@ def main(infile:Union[str,Path],
     infile = Path(infile)
     bucket = f'datacube-{level}-data-public'
     proj_epsg = CRS.from_epsg(epsg)
-    output_path = infile.with_stem(f'{infile.stem}_cog')
+    output_path = infile.with_stem(f'{infile.stem}')
+    ftp_path="https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS"
+    
+
     success = False
     published_cog = False
     thumbnail_creation = False 
+    json_creation = False 
     published_stac = False
+    published_thumb = False
+    published_json = False
 
     # Set the datacube AWS cannonical ID for s3 object permissions
     if level == 'prod':
@@ -87,6 +96,9 @@ def main(infile:Union[str,Path],
     else:
         # Default to stage
         dc_aws_id = 'id="1146f3529acf9b3cbfc11dbddcd9b4424910c150b022e78558272d726525a30f"'
+        # Only for testing 
+        # ftp_path="https://data.eodms-sgdot.nrcan-rncan.gc.ca/public/EGS/outgoing/EGSDevProducts"
+
     # Set the acl headers for datacube full control and public read
     
     acl = extra_args = {
@@ -97,6 +109,15 @@ def main(infile:Union[str,Path],
     # Extract datetime from the file name <other>_<date>_<time>.tif
     parts = infile.stem.split('_')
     timestamp =f'{parts[-2]}T{parts[-1]}'
+
+    # Extract value for creating FTP path
+    product = parts[0]
+    country = parts[1]
+    province = parts[2]
+    year = (parts[-2])[0:4]
+    ftp_url = f'{ftp_path}/{year}/{product}/{country}/{province}/{infile.stem}.zip'
+    json_file=f'{infile.parent}\{infile.stem}.json'
+
 
     # Reformat to TIFFTAG_DATETIME format
     datetime_obj = datetime.strptime(timestamp, '%Y%m%dT%H%M%S')
@@ -123,31 +144,97 @@ def main(infile:Union[str,Path],
                 'published_stac':False}
     
     # Create a thumbnail and check the result
-    thumbnail_creation, output_thumb, ct_err = create_thumbnail(str(infile))
+    thumbnail_creation, outfile_thumb, ct_err = create_thumbnail(str(infile))
     if not thumbnail_creation:
         return {'sucess':success,
-                'message':'Thunmbnail has not been created',
+                'message':'Thumbnail has not been created',
                 'creationThumbnail error': ct_err}
         
-    """     
-    # Create a metadata json file and check the result
-    json_creation, output_thumb, ct_err = create_thumbnail(str(infile))
-    if not json_creation:
-        return {'sucess':success,
-                'message':'Thunmbnail has not been created',
-                'creationThumbnail error': ct_err} 
-    """
     
     published_thumb, pt_err = upload_file_to_s3(
         bucket,
         folder_path=prefix,
-        local_file_path=output_thumb,
-        new_file_name=output_thumb.name,
+        local_file_path=outfile_thumb,
+        new_file_name=outfile_thumb.name,
         extra_args=acl)
     if not published_thumb:
         return {'succes':published_thumb,
-                'message':'Thunmbnail has not been published',
+                'message':'Thumbnail has not been published',
                 'published thumbnail error': pt_err}
+
+
+    # Create a metadata JSON file and check the result
+    json_creation, jc_err = create_json(json_file,ftp_url)
+    if not json_creation:
+        result = {'succes':json_creation,
+                'message':'JSON file has not been created',
+                'Create thumbnail error': jc_err}
+
+        return result
+    json_file= Path(json_file)
+
+    published_json, pj_err = upload_file_to_s3(
+        bucket,
+        folder_path=prefix,
+        local_file_path=json_file,
+        new_file_name=json_file.name,
+        extra_args=acl)
+
+    if not published_json:
+        message = 'The JSON file has not been published'
+        if __name__ == '__main__':
+            # Pass back command line error
+            return 1, message
+        else:
+            # Return module import error
+            return {'succes':published_json,
+                    'message':message,
+                    'published thumbnail error': pj_err}
+        
+    """
+    # Create a SVG legend file and check the result
+    legend_file_svg_ori=f'riverice_legend.svg'
+    legend_file_svg=f'{infile.stem}_legend.svg'
+
+    legend_creation_svg = copy_file(bucket,
+                                prefix,
+                                legend_file_svg_ori,
+                                bucket_name_dest=bucket,
+                                prefix_dest=prefix,
+                                filename_dest=legend_file_svg,
+                                kwarg=acl)
+    if not legend_creation_svg:
+        message ="The SVG legend file has NOT been created"
+        if __name__ == '__main__':
+            # Pass back command line error
+            return 1, message
+        else:
+            # Return module import error
+            return {'succes':legend_creation_svg,
+                    'message':message}
+
+    """     
+    # Create a PNG legend file and check the result
+    legend_file_png_ori=f'riverice_legend.png'
+    legend_file_png=f'{infile.stem}_legend.png'
+    legend_creation_png = copy_file(bucket,
+                                    prefix,
+                                    legend_file_png_ori,
+                                    bucket_name_dest=bucket,
+                                    prefix_dest=prefix,
+                                    filename_dest=legend_file_png,
+                                    kwarg=acl)
+
+    if not legend_creation_png:
+        message ="The PNG legend file has NOT been created"
+        if __name__ == '__main__':
+            # Pass back command line error
+            return 1, message
+        else:
+            # Return module import error
+            return {'succes':legend_creation_png,
+                    'message':message
+                    }
 
     published_cog, pc_err = upload_file_to_s3(
         bucket,
@@ -155,8 +242,9 @@ def main(infile:Union[str,Path],
         local_file_path=output_path,
         new_file_name=output_path.name,
         extra_args=acl)
+
     if published_cog:
-        pass
+
         # TODO upload side cars
         # upload_fileContent_to_s3(bucket, file_key=prefix + 'is-active.txt', file_content=is_active_as_string)
 
@@ -176,7 +264,6 @@ def main(infile:Union[str,Path],
     print(result)
 
     #TODO Clean up / delete local files
-
     return result
 
 def _handle_args():

@@ -103,6 +103,8 @@ def upload_file_to_s3(bucket_name:str, folder_path:str, local_file_path:Union[st
 
     # Concatenate the folder path and file name 
     s3_key = folder_path + new_file_name
+    print(s3_key, bucket_name, local_file_path)
+
     try: 
         # Add public read ACL 
         s3_client.upload_file(local_file_path, bucket_name, s3_key, ExtraArgs=extra_args)
@@ -145,6 +147,24 @@ def list_files_with_extension(directory, extension):
             filenames.append(file)
     return filenames
 
+
+def copy_file(bucket_name_start, prefix_start, filename_start, bucket_name_dest, prefix_dest, filename_dest,kwarg):
+    """
+    Copy a file from an S3 bucket to another and rename it
+    """
+    # Create a Boto3 S3 client
+    client = boto3.client('s3')
+
+    #response = client.list_objects_v2(Bucket=bucket_name_start, Prefix=prefix)
+    #source_key = response["Contents"][0]["Key"]
+    #copy_source = {'Bucket': bucket_name_start, 'Key': source_key+'/'+filename_start}
+    copy_source = {'Bucket': bucket_name_start, 'Key': prefix_start+filename_start}
+    client.copy_object(Bucket = bucket_name_dest,
+                       CopySource = copy_source,
+                       Key = prefix_dest+filename_dest,
+                       **kwarg)
+    #client.delete_object(Bucket = your_bucket_name, Key = source_key)
+    return True
 
 ssl_utils.unset_nrcan_ssl()
 """

@@ -1,11 +1,8 @@
 .env
 .git-credentials
-test/tiff/*
-tests/data/*.tif
-COG_creation/__pycache__
-__pycache__/
-*/__pycache__/
-*/*/__pycache__/
-*/*/*/__pycache__/
-COG_creation/Test/tiff/*
 .vscode/launch.json
+__pycache__/
+NRCAN-Root-2019-B64.cer
+tests/data/*_reprj.tif
+tests/data/*.png
+tests/data/*.png.*

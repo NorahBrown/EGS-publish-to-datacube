@@ -1,7 +1,0 @@
-requests
-zipfile
-gdal
-BeautifulSoup
-boto3
-logging
-rio-cogeo
